@@ -12,18 +12,17 @@
   <meta name="apple-mobile-web-app-title" content="GymTrack" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
 
   <style>
     :root {
       --accent: #ff3d00;
-      --accent2: #00e5ff;
       --bg: #0d0d0d;
-      --card: #111;
-      --border: #1f1f1f;
-      --muted: #555;
-      --dim: #2a2a2a;
-      --text: #f5f5f5;
+      --card: #161616;
+      --border: #2a2a2a;
+      --muted: #666;
+      --dim: #333;
+      --text: #ffffff;
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
@@ -33,218 +32,251 @@
     ::-webkit-scrollbar { width: 3px; }
     ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
     input, select, textarea, button { font-family: 'Barlow', sans-serif; }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent) !important; box-shadow: 0 0 0 2px rgba(255,61,0,0.12); }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent) !important; box-shadow: 0 0 0 2px rgba(255,61,0,0.15); }
 
     @keyframes fadeUp  { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
     @keyframes slideIn { from{opacity:0;transform:translateX(-10px);} to{opacity:1;transform:translateX(0);} }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-8px);} to{opacity:1;transform:translateY(0);} }
     @keyframes pulse   { 0%,100%{opacity:1;} 50%{opacity:.4;} }
     @keyframes popIn   { 0%{transform:scale(.85);opacity:0;} 70%{transform:scale(1.04);} 100%{transform:scale(1);opacity:1;} }
-    @keyframes tickDown { from{stroke-dashoffset:0;} to{stroke-dashoffset:283;} }
 
     .fade-up  { animation: fadeUp .3s ease both; }
     .slide-in { animation: slideIn .22s ease both; }
 
-    /* Layout */
+    /* ── Layout ── */
     #app { display: flex; flex-direction: column; height: 100%; }
+
     header {
-      background: linear-gradient(180deg, #1c0a00 0%, var(--bg) 100%);
+      background: var(--bg);
       border-bottom: 1px solid var(--border);
-      padding: 16px 18px 0; flex-shrink: 0;
+      padding: 14px 18px 14px;
+      flex-shrink: 0;
       position: sticky; top: 0; z-index: 100;
+      /* push down past dynamic island */
+      padding-top: max(14px, calc(var(--safe-top) + 6px));
     }
-    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; justify-content: space-between; }
-    .logo-left { display: flex; align-items: center; gap: 10px; }
-    .logo-text { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; letter-spacing: 2px; }
+
+    .header-row { display: flex; align-items: center; justify-content: space-between; }
+
+    /* Logo / nav trigger */
+    .logo-btn {
+      background: none; border: none; cursor: pointer; padding: 0;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .logo-text {
+      font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+      font-size: 30px; letter-spacing: 3px; line-height: 1;
+    }
     .logo-text span:first-child { color: var(--accent); }
-    .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+    .logo-text span:last-child  { color: var(--text); }
+    .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; flex-shrink: 0; }
+    .logo-arrow { color: var(--muted); font-size: 12px; transition: transform .2s; }
+    .logo-arrow.open { transform: rotate(180deg); }
+
+    /* Dropdown nav */
+    #nav-dropdown {
+      display: none; position: absolute; top: calc(100% + 4px); left: 18px;
+      background: #1a1a1a; border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; z-index: 200; min-width: 200px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6);
+      animation: slideDown .2s ease;
+    }
+    #nav-dropdown.open { display: block; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px; cursor: pointer; color: var(--muted);
+      font-family: 'Barlow Condensed', sans-serif; font-size: 15px;
+      font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+      transition: background .12s, color .12s; border: none; background: none; width: 100%; text-align: left;
+    }
+    .nav-item:hover, .nav-item.active { background: rgba(255,61,0,.1); color: var(--accent); }
+    .nav-item + .nav-item { border-top: 1px solid var(--border); }
+    .nav-item-icon { font-size: 18px; width: 24px; text-align: center; }
+    .current-section {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 11px;
+      letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-top: 4px;
+    }
 
     /* Settings button */
     .settings-btn {
       background: transparent; border: 1px solid var(--border); border-radius: 8px;
-      color: var(--muted); cursor: pointer; padding: 6px 10px; font-size: 18px;
-      transition: border-color .15s, color .15s;
+      color: var(--muted); cursor: pointer; padding: 7px 11px; font-size: 18px;
+      transition: border-color .15s, color .15s; flex-shrink: 0;
     }
     .settings-btn:hover { border-color: var(--accent); color: var(--accent); }
 
     /* Settings panel */
     #settings-panel {
-      display: none; position: fixed; top: 0; right: 0; bottom: 0; width: min(320px, 100vw);
-      background: #0f0f0f; border-left: 1px solid var(--border);
-      z-index: 300; padding: 24px 20px; overflow-y: auto;
-      animation: slideInRight .25s ease;
+      display: none; position: fixed; left: 0; right: 0; bottom: 0;
+      /* top starts below safe area + some breathing room */
+      top: calc(var(--safe-top) + 60px);
+      background: #111; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0;
+      z-index: 300; padding: 24px 20px 40px; overflow-y: auto;
+      animation: slideUp .25s ease;
     }
     #settings-panel.open { display: block; }
-    #settings-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:299; }
+    #settings-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:299; }
     #settings-overlay.open { display:block; }
-    @keyframes slideInRight { from{transform:translateX(100%);} to{transform:translateX(0);} }
+    @keyframes slideUp { from{transform:translateY(30px);opacity:0;} to{transform:translateY(0);opacity:1;} }
 
-    .color-swatch {
-      width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 3px solid transparent;
-      transition: border-color .15s, transform .12s;
-    }
+    .color-swatch { width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: border-color .15s, transform .12s; }
     .color-swatch:hover { transform: scale(1.12); }
     .color-swatch.active { border-color: #fff; }
 
-    .tabs { display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-    .tabs::-webkit-scrollbar { display: none; }
-    .tab {
-      flex-shrink: 0; background: none; border: none; border-bottom: 2px solid transparent;
-      color: var(--muted); cursor: pointer; padding: 8px 14px 10px;
-      font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 12px;
-      letter-spacing: 1.5px; text-transform: uppercase; transition: color .15s, border-color .15s; white-space: nowrap;
-    }
-    .tab:hover, .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
     main { flex: 1; overflow-y: auto; padding: 20px 18px 40px; -webkit-overflow-scrolling: touch; }
 
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; transition: border-color .15s, transform .15s; }
-    .card:hover { border-color: #2e2e2e; transform: translateY(-1px); }
-    .accent-card { background: linear-gradient(135deg,#1a0800 0%,#0d0d0d 100%); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; }
+    /* ── Cards ── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; transition: border-color .15s, transform .15s; }
+    .card:hover { border-color: #3a3a3a; transform: translateY(-1px); }
+    .accent-card { background: linear-gradient(135deg,#1f0a00 0%,#161616 100%); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 10px; }
 
+    /* ── Buttons ── */
     .btn-primary {
-      background: var(--accent); color: #fff; border: none; border-radius: 7px;
-      padding: 11px 22px; cursor: pointer;
+      background: var(--accent); color: #fff; border: none; border-radius: 8px;
+      padding: 12px 22px; cursor: pointer;
       font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px;
       letter-spacing: 1.2px; text-transform: uppercase;
-      transition: background .15s, transform .12s, box-shadow .15s;
+      transition: filter .15s, transform .12s, box-shadow .15s;
     }
     .btn-primary:hover  { filter: brightness(1.15); transform: translateY(-1px); box-shadow: 0 4px 18px rgba(255,61,0,.3); }
     .btn-primary:active { transform: translateY(0); }
 
     .btn-ghost {
-      background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 7px;
+      background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px;
       padding: 8px 16px; cursor: pointer;
       font-family: 'Barlow Condensed', sans-serif; font-size: 13px;
       letter-spacing: 1px; text-transform: uppercase; transition: border-color .15s, color .15s;
     }
     .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-    .btn-danger { color: #c33; border-color: #300; }
+    .btn-danger { color: #c33; border-color: #400; }
     .btn-danger:hover { background: rgba(255,0,0,.08); border-color: #f33; color: #f33; }
 
+    /* ── Fields ── */
     .field {
-      background: #0a0a0a; border: 1px solid var(--border); border-radius: 7px;
+      background: #0d0d0d; border: 1px solid var(--border); border-radius: 8px;
       color: var(--text); padding: 9px 12px; font-family: 'Barlow', sans-serif; font-size: 14px;
       transition: border-color .15s;
     }
     .field::placeholder { color: var(--muted); }
 
-    /* Template editor exercise row — now wider for timer */
-    .tpl-ex-row { display: grid; grid-template-columns: 1fr 50px 80px 58px 90px 28px; gap: 5px; align-items: center; margin-bottom: 8px; }
-    .tpl-ex-hdr { display: grid; grid-template-columns: 1fr 50px 80px 58px 90px 28px; gap: 5px; margin-bottom: 6px; }
+    /* ── Template editor row ── */
+    .tpl-ex-row { display: grid; grid-template-columns: 1fr 50px 80px 90px 28px; gap: 5px; align-items: center; margin-bottom: 8px; }
+    .tpl-ex-hdr { display: grid; grid-template-columns: 1fr 50px 80px 90px 28px; gap: 5px; margin-bottom: 6px; }
     .col-hdr { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
 
-    /* Log session exercise block */
-    .log-ex-block { border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
-    .log-ex-name { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: .5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-    .sets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px,1fr)); gap: 8px; }
-    .set-box { background: #0a0a0a; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; text-align: center; }
-    .set-label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
-    .set-input { width: 100%; background: transparent; border: none; color: var(--text); font-size: 16px; font-weight: 600; text-align: center; }
+    /* ── Log session exercise block ── */
+    .log-ex-block { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; background: var(--card); }
+    .log-ex-name { font-family: 'Bebas Neue','Barlow Condensed',sans-serif; font-size: 19px; letter-spacing: 1px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .sets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px,1fr)); gap: 8px; }
+    .set-box { background: #0d0d0d; border: 1px solid var(--border); border-radius: 8px; padding: 8px 8px; text-align: center; }
+    .set-label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; }
+    .set-input { width: 100%; background: transparent; border: none; color: var(--text); font-size: 17px; font-weight: 700; text-align: center; }
     .set-input:focus { outline: none; }
+    .set-kg { width: 100%; background: transparent; border: none; border-top: 1px solid var(--border); color: var(--accent); font-size: 13px; font-weight: 600; text-align: center; padding-top: 5px; margin-top: 4px; }
+    .set-kg:focus { outline: none; }
+    .set-kg::placeholder { color: var(--dim); }
 
-    /* Timer */
-    .timer-badge {
-      font-family: 'Barlow Condensed', sans-serif; font-size: 12px; letter-spacing: 1px;
-      color: var(--accent); border: 1px solid rgba(255,61,0,.3); border-radius: 20px;
-      padding: 2px 10px; cursor: pointer; transition: background .15s;
-    }
+    /* ── Timer ── */
+    .timer-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; letter-spacing: 1px; color: var(--accent); border: 1px solid rgba(255,61,0,.35); border-radius: 20px; padding: 3px 10px; cursor: pointer; transition: background .15s; }
     .timer-badge:hover { background: rgba(255,61,0,.1); }
-
-    /* Timer modal */
-    #timer-modal {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85);
-      z-index: 400; align-items: center; justify-content: center;
-    }
+    #timer-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.88); z-index: 400; align-items: center; justify-content: center; }
     #timer-modal.open { display: flex; }
-    .timer-box {
-      background: #111; border: 1px solid var(--border); border-radius: 20px;
-      padding: 36px 40px; text-align: center; min-width: 260px;
-      animation: popIn .3s ease;
-    }
-    .timer-title { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; }
+    .timer-box { background: #161616; border: 1px solid var(--border); border-radius: 22px; padding: 36px 40px; text-align: center; min-width: 260px; animation: popIn .3s ease; }
+    .timer-title { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; }
     .timer-circle { position: relative; width: 140px; height: 140px; margin: 0 auto 20px; }
     .timer-circle svg { transform: rotate(-90deg); }
     .timer-ring { fill: none; stroke: var(--border); stroke-width: 8; }
     .timer-prog { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 283; transition: stroke-dashoffset .9s linear, stroke .3s; }
-    .timer-display {
-      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-      font-family: 'Barlow Condensed', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 1px;
-    }
+    .timer-display { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue','Barlow Condensed',sans-serif; font-size: 46px; letter-spacing: 2px; }
     .timer-controls { display: flex; gap: 10px; justify-content: center; }
 
-    /* Stat cards */
+    /* ── Stats ── */
     .stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
-    .stat-card { background: linear-gradient(145deg,#151515,var(--bg)); border: 1px solid var(--border); border-radius: 10px; padding: 14px 12px; text-align: center; }
-    .stat-val { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--accent); }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 12px; text-align: center; }
+    .stat-val { font-family: 'Bebas Neue','Barlow Condensed',sans-serif; font-size: 30px; color: var(--accent); letter-spacing: 1px; }
     .stat-lbl { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-top: 3px; }
 
-    /* Template picker */
+    /* ── Template picker ── */
     .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 10px; }
-    .tpl-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 14px; cursor: pointer; color: var(--text); text-align: left; transition: border-color .15s, transform .15s; width: 100%; }
+    .tpl-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 14px; cursor: pointer; color: var(--text); text-align: left; transition: border-color .15s, transform .15s; width: 100%; }
     .tpl-card:hover { border-color: var(--accent); transform: translateY(-2px); }
     .tpl-card.free { background: transparent; border: 1px dashed var(--dim); color: var(--muted); }
 
-    .pill { font-size: 11px; color: var(--muted); background: #1a1a1a; padding: 3px 8px; border-radius: 4px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: .5px; }
+    /* ── Pills ── */
+    .pill { font-size: 11px; color: var(--muted); background: #1e1e1e; padding: 3px 8px; border-radius: 4px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: .5px; }
     .pill-accent { background: rgba(255,61,0,.12); border: 1px solid rgba(255,61,0,.3); color: var(--accent); }
 
-    .hist-item { border: 1px solid var(--border); border-left: 3px solid var(--dim); border-radius: 8px; margin-bottom: 10px; overflow: hidden; transition: border-color .15s; }
+    /* ── History ── */
+    .hist-item { border: 1px solid var(--border); border-left: 3px solid var(--dim); border-radius: 10px; margin-bottom: 10px; overflow: hidden; transition: border-color .15s; background: var(--card); }
     .hist-item.open { border-left-color: var(--accent); }
     .hist-header { padding: 14px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
     .hist-body { padding: 0 16px 14px; border-top: 1px solid var(--border); }
-    .hist-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
+    .hist-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 6px; }
 
+    /* ── Charts ── */
     .chart-wrap { width: 100%; overflow: hidden; }
     .svg-chart { width: 100%; overflow: visible; }
-    .success-msg { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: 1px; animation: popIn .4s ease; }
 
+    /* ── Misc ── */
+    .success-msg { font-family: 'Bebas Neue','Barlow Condensed',sans-serif; font-size: 22px; color: var(--accent); letter-spacing: 2px; animation: popIn .4s ease; }
     section { display: none; }
     section.active { display: block; }
     .section-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
-
     .empty { text-align: center; padding: 60px 0; }
     .empty-icon { font-size: 48px; margin-bottom: 14px; }
     .empty-txt { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
 
-    #install-banner {
-      display: none; position: fixed; bottom: 0; left: 0; right: 0;
-      background: linear-gradient(135deg,#1a0800,#111); border-top: 1px solid var(--accent);
-      padding: 14px 18px calc(14px + var(--safe-bottom)); z-index: 200;
-    }
+    /* ── Install banner ── */
+    #install-banner { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg,#1f0800,#161616); border-top: 1px solid var(--accent); padding: 14px 18px calc(14px + var(--safe-bottom)); z-index: 200; }
     #install-banner.show { display: flex; align-items: center; gap: 14px; }
     .install-text { flex: 1; }
     .install-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 1px; }
     .install-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-    /* Emoji picker scrollable */
-    .emoji-scroll { display: flex; gap: 8px; flex-wrap: wrap; max-height: 130px; overflow-y: auto; margin-bottom: 14px; padding: 4px 0; }
-    .emj-btn { font-size: 22px; background: #111; border: 1px solid var(--border); border-radius: 8px; padding: 5px 9px; cursor: pointer; transition: border-color .12s, background .12s; }
+    /* ── Emoji picker ── */
+    .emoji-scroll { display: flex; gap: 8px; flex-wrap: wrap; max-height: 140px; overflow-y: auto; margin-bottom: 14px; padding: 4px 0; }
+    .emj-btn { font-size: 22px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 5px 9px; cursor: pointer; transition: border-color .12s, background .12s; }
     .emj-btn.active { background: rgba(255,61,0,.15); border-color: var(--accent); }
+
+    /* Nav overlay */
+    #nav-overlay { display:none; position:fixed; inset:0; z-index:199; }
+    #nav-overlay.open { display:block; }
   </style>
 </head>
 <body>
 <div id="app">
   <header>
-    <div class="logo">
-      <div class="logo-left">
-        <div class="logo-text"><span>GYM</span><span>TRACK</span></div>
-        <div class="logo-dot"></div>
+    <div class="header-row">
+      <div style="position:relative;">
+        <button class="logo-btn" onclick="toggleNav()" id="logo-btn">
+          <div class="logo-text"><span>GYM</span><span>TRACK</span></div>
+          <div class="logo-dot"></div>
+          <span class="logo-arrow" id="logo-arrow">▼</span>
+        </button>
+        <!-- Dropdown -->
+        <div id="nav-dropdown">
+          <button class="nav-item active" data-tab="log"       onclick="goTo('log')">      <span class="nav-item-icon">🏋️</span> Sessione</button>
+          <button class="nav-item"        data-tab="templates" onclick="goTo('templates')"><span class="nav-item-icon">📂</span> Schede</button>
+          <button class="nav-item"        data-tab="progress"  onclick="goTo('progress')"> <span class="nav-item-icon">📈</span> Progressi</button>
+          <button class="nav-item"        data-tab="history"   onclick="goTo('history')">  <span class="nav-item-icon">📋</span> Storico</button>
+        </div>
       </div>
-      <button class="settings-btn" onclick="openSettings()" title="Impostazioni">⚙️</button>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="current-section-lbl" class="current-section">Sessione</div>
+        <button class="settings-btn" onclick="openSettings()">⚙️</button>
+      </div>
     </div>
-    <nav class="tabs" id="tabs">
-      <button class="tab active" data-tab="log">🏋️ Sessione</button>
-      <button class="tab" data-tab="history">📋 Storico</button>
-      <button class="tab" data-tab="progress">📈 Progressi</button>
-      <button class="tab" data-tab="templates">📂 Schede</button>
-    </nav>
   </header>
+
+  <!-- Nav overlay -->
+  <div id="nav-overlay" onclick="closeNav()"></div>
 
   <main id="main">
     <!-- LOG -->
     <section id="tab-log" class="active fade-up">
       <div class="accent-card" style="padding:14px 18px;margin-bottom:22px;">
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:3px;">Sessione di oggi</div>
-        <div id="today-date" style="font-family:'Barlow Condensed',sans-serif;font-size:21px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;"></div>
+        <div id="today-date" style="font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:24px;letter-spacing:1px;text-transform:uppercase;"></div>
       </div>
       <div id="log-tpl-pick">
         <div class="section-label">Scegli scheda</div>
@@ -252,11 +284,10 @@
       </div>
       <div id="log-editor" style="display:none;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
-          <div id="log-editor-title" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:1px;text-transform:uppercase;"></div>
+          <div id="log-editor-title" style="font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:26px;letter-spacing:2px;text-transform:uppercase;"></div>
           <button class="btn-ghost" onclick="cancelLog()" style="padding:4px 12px;font-size:11px;">← Cambia</button>
         </div>
         <div id="log-ex-list"></div>
-        <button class="btn-ghost" onclick="addLogEx()" style="width:100%;margin-bottom:18px;">+ Aggiungi esercizio</button>
         <textarea id="log-note" class="field" rows="2" placeholder="Note sulla sessione..." style="width:100%;resize:vertical;margin-bottom:16px;"></textarea>
         <div id="log-actions">
           <button class="btn-primary" onclick="saveSession()">💾 Salva sessione</button>
@@ -274,7 +305,7 @@
       <div class="stat-grid" style="margin-bottom:26px;">
         <div class="stat-card"><div style="font-size:20px;margin-bottom:6px;">🔥</div><div class="stat-val" id="stat-total">0</div><div class="stat-lbl">Sessioni</div></div>
         <div class="stat-card"><div style="font-size:20px;margin-bottom:6px;">📅</div><div class="stat-val" id="stat-week">0</div><div class="stat-lbl">Questa sett.</div></div>
-        <div class="stat-card"><div style="font-size:20px;margin-bottom:6px;">⚡</div><div class="stat-val" id="stat-vol">0</div><div class="stat-lbl">Vol. totale kg</div></div>
+        <div class="stat-card"><div style="font-size:20px;margin-bottom:6px;">⚡</div><div class="stat-val" id="stat-vol">0</div><div class="stat-lbl">Vol. totale</div></div>
       </div>
       <div style="margin-bottom:20px;">
         <div class="section-label">Analizza esercizio</div>
@@ -282,7 +313,7 @@
           <option value="">— seleziona —</option>
         </select>
       </div>
-      <div id="prog-best" style="display:none;margin-bottom:20px;display:none;align-items:center;gap:8px;">
+      <div id="prog-best" style="display:none;margin-bottom:20px;align-items:center;gap:8px;">
         <span style="font-size:18px;">🏆</span>
         <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;">MASSIMO: <span id="prog-best-val" style="color:var(--accent);"></span></span>
       </div>
@@ -301,12 +332,11 @@
       <div id="tpl-editor" style="display:none;">
         <button class="btn-ghost" onclick="closeTplEditor()" style="margin-bottom:18px;font-size:11px;">← Indietro</button>
         <div class="emoji-scroll" id="emoji-picker"></div>
-        <input id="tpl-name-input" class="field" placeholder="Nome scheda (es. PUSH A)" style="width:100%;margin-bottom:18px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-transform:uppercase;" />
+        <input id="tpl-name-input" class="field" placeholder="Nome scheda (es. PUSH A)" style="width:100%;margin-bottom:18px;font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:20px;letter-spacing:2px;text-transform:uppercase;" />
         <div class="tpl-ex-hdr">
           <div class="col-hdr">Esercizio</div>
           <div class="col-hdr" style="text-align:center;">Ser</div>
           <div class="col-hdr" style="text-align:center;">Rip</div>
-          <div class="col-hdr" style="text-align:center;">Kg</div>
           <div class="col-hdr" style="text-align:center;">Riposo</div>
           <div></div>
         </div>
@@ -320,27 +350,23 @@
   </main>
 </div>
 
-<!-- Settings panel -->
+<!-- Settings panel (bottom sheet, below dynamic island) -->
 <div id="settings-overlay" onclick="closeSettings()"></div>
 <div id="settings-panel">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:1px;">⚙️ IMPOSTAZIONI</div>
-    <button onclick="closeSettings()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px;">×</button>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+    <div style="font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:24px;letter-spacing:2px;">⚙️ IMPOSTAZIONI</div>
+    <button onclick="closeSettings()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:24px;line-height:1;">×</button>
   </div>
-
   <div class="section-label">Colore principale</div>
-  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px;" id="color-swatches"></div>
-
-  <div class="section-label">Colore sfondo</div>
-  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px;" id="bg-swatches"></div>
-
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:26px;" id="color-swatches"></div>
+  <div class="section-label">Sfondo</div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:26px;" id="bg-swatches"></div>
   <div class="section-label" style="margin-bottom:10px;">Colore personalizzato</div>
-  <div style="display:flex;gap:10px;align-items:center;margin-bottom:28px;">
+  <div style="display:flex;gap:10px;align-items:center;margin-bottom:26px;">
     <input type="color" id="custom-color" value="#ff3d00" style="width:44px;height:44px;border:none;border-radius:8px;cursor:pointer;background:none;" />
     <button class="btn-ghost" onclick="applyCustomColor()" style="font-size:12px;">Applica</button>
   </div>
-
-  <button class="btn-ghost btn-danger" onclick="resetSettings()" style="width:100%;margin-top:8px;">Ripristina predefiniti</button>
+  <button class="btn-ghost btn-danger" onclick="resetSettings()" style="width:100%;">Ripristina predefiniti</button>
 </div>
 
 <!-- Timer modal -->
@@ -381,110 +407,127 @@ const LS = {
 // ── State ──────────────────────────────────────────────────────────────────
 let workouts  = LS.get("gt_workouts")  || [];
 let templates = LS.get("gt_templates") || [];
-
-let logExercises = [];  // { name, sets, reps, weight, restSecs, setData:[] }
+let logExercises = [];
 let logTpl = null;
 let editingTpl = null;
 let tplExercises = [];
 let deferredPrompt = null;
 
-// ── Settings colours ───────────────────────────────────────────────────────
+// ── Theme ──────────────────────────────────────────────────────────────────
 const ACCENT_PRESETS = ["#ff3d00","#00e5ff","#39ff14","#ff2d78","#ffd600","#7c4dff","#ff6d00","#00bfa5"];
 const BG_PRESETS     = ["#0d0d0d","#0a0f1e","#0f1a0f","#1a0a1a","#1a1000","#ffffff"];
-
 let currentAccent = LS.get("gt_accent") || "#ff3d00";
 let currentBg     = LS.get("gt_bg")     || "#0d0d0d";
 
 function applyTheme() {
-  document.documentElement.style.setProperty("--accent", currentAccent);
-  document.documentElement.style.setProperty("--bg", currentBg);
-  const isDark = currentBg === "#ffffff";
-  document.documentElement.style.setProperty("--text", isDark ? "#111" : "#f5f5f5");
-  document.documentElement.style.setProperty("--card", isDark ? "#f0f0f0" : "#111");
-  document.documentElement.style.setProperty("--border", isDark ? "#ddd" : "#1f1f1f");
-  document.documentElement.style.setProperty("--muted", isDark ? "#888" : "#555");
+  const r = document.documentElement.style;
+  r.setProperty("--accent", currentAccent);
+  r.setProperty("--bg", currentBg);
+  const light = currentBg === "#ffffff";
+  r.setProperty("--text",   light ? "#111"    : "#ffffff");
+  r.setProperty("--card",   light ? "#f2f2f2" : "#161616");
+  r.setProperty("--border", light ? "#ddd"    : "#2a2a2a");
+  r.setProperty("--muted",  light ? "#777"    : "#666");
   document.body.style.background = currentBg;
 }
-
 function renderSwatches() {
-  document.getElementById("color-swatches").innerHTML = ACCENT_PRESETS.map(c => `
-    <div class="color-swatch ${c===currentAccent?'active':''}" style="background:${c};" onclick="setAccent('${c}')"></div>`).join("");
-  document.getElementById("bg-swatches").innerHTML = BG_PRESETS.map(c => `
-    <div class="color-swatch ${c===currentBg?'active':''}" style="background:${c};border:1px solid #333;" onclick="setBg('${c}')"></div>`).join("");
+  document.getElementById("color-swatches").innerHTML = ACCENT_PRESETS.map(c =>
+    `<div class="color-swatch ${c===currentAccent?'active':''}" style="background:${c};" onclick="setAccent('${c}')"></div>`).join("");
+  document.getElementById("bg-swatches").innerHTML = BG_PRESETS.map(c =>
+    `<div class="color-swatch ${c===currentBg?'active':''}" style="background:${c};border:1px solid #444;" onclick="setBg('${c}')"></div>`).join("");
   document.getElementById("custom-color").value = currentAccent;
 }
-
-function setAccent(c) { currentAccent = c; LS.set("gt_accent", c); applyTheme(); renderSwatches(); }
-function setBg(c)     { currentBg = c;     LS.set("gt_bg", c);     applyTheme(); renderSwatches(); }
+function setAccent(c) { currentAccent=c; LS.set("gt_accent",c); applyTheme(); renderSwatches(); }
+function setBg(c)     { currentBg=c;     LS.set("gt_bg",c);     applyTheme(); renderSwatches(); }
 function applyCustomColor() { setAccent(document.getElementById("custom-color").value); }
 function resetSettings() { setAccent("#ff3d00"); setBg("#0d0d0d"); }
-
-function openSettings()  { document.getElementById("settings-panel").classList.add("open"); document.getElementById("settings-overlay").classList.add("open"); renderSwatches(); }
+function openSettings()  { renderSwatches(); document.getElementById("settings-panel").classList.add("open"); document.getElementById("settings-overlay").classList.add("open"); }
 function closeSettings() { document.getElementById("settings-panel").classList.remove("open"); document.getElementById("settings-overlay").classList.remove("open"); }
 
-// ── Timer ──────────────────────────────────────────────────────────────────
-let timerTotal = 0, timerLeft = 0, timerRunning = false, timerInterval = null;
+// ── Nav dropdown ───────────────────────────────────────────────────────────
+const NAV_LABELS = { log:"Sessione", templates:"Schede", progress:"Progressi", history:"Storico" };
+let navOpen = false;
 
-function openTimer(secs, exName) {
-  timerTotal = secs; timerLeft = secs; timerRunning = false;
-  clearInterval(timerInterval);
-  document.getElementById("timer-ex-name").textContent = (exName || "RIPOSO").toUpperCase();
-  document.getElementById("timer-toggle-btn").textContent = "▶ Avvia";
+function toggleNav() {
+  navOpen = !navOpen;
+  document.getElementById("nav-dropdown").classList.toggle("open", navOpen);
+  document.getElementById("nav-overlay").classList.toggle("open", navOpen);
+  document.getElementById("logo-arrow").classList.toggle("open", navOpen);
+}
+function closeNav() {
+  navOpen = false;
+  document.getElementById("nav-dropdown").classList.remove("open");
+  document.getElementById("nav-overlay").classList.remove("open");
+  document.getElementById("logo-arrow").classList.remove("open");
+}
+function goTo(tab) {
+  closeNav();
+  // Update active nav item
+  document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.tab===tab));
+  // Update section label
+  document.getElementById("current-section-lbl").textContent = NAV_LABELS[tab] || "";
+  // Switch sections
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  const sec = document.getElementById("tab-"+tab);
+  sec.classList.add("active");
+  sec.classList.remove("fade-up"); void sec.offsetWidth; sec.classList.add("fade-up");
+  if (tab==="history")   renderHistory();
+  if (tab==="progress")  renderProgress();
+  if (tab==="templates") renderTemplates();
+}
+
+// ── Timer ──────────────────────────────────────────────────────────────────
+let timerTotal=0, timerLeft=0, timerRunning=false, timerInterval=null;
+function openTimer(secs, name) {
+  timerTotal=secs; timerLeft=secs; timerRunning=false; clearInterval(timerInterval);
+  document.getElementById("timer-ex-name").textContent=(name||"RIPOSO").toUpperCase();
+  document.getElementById("timer-toggle-btn").textContent="▶ Avvia";
   updateTimerDisplay();
   document.getElementById("timer-modal").classList.add("open");
 }
-function closeTimer() {
-  clearInterval(timerInterval); timerRunning = false;
-  document.getElementById("timer-modal").classList.remove("open");
-}
+function closeTimer() { clearInterval(timerInterval); timerRunning=false; document.getElementById("timer-modal").classList.remove("open"); }
 function toggleTimer() {
   if (timerRunning) {
-    clearInterval(timerInterval); timerRunning = false;
-    document.getElementById("timer-toggle-btn").textContent = "▶ Riprendi";
+    clearInterval(timerInterval); timerRunning=false;
+    document.getElementById("timer-toggle-btn").textContent="▶ Riprendi";
   } else {
-    if (timerLeft <= 0) { timerLeft = timerTotal; }
-    timerRunning = true;
-    document.getElementById("timer-toggle-btn").textContent = "⏸ Pausa";
-    timerInterval = setInterval(() => {
+    if (timerLeft<=0) timerLeft=timerTotal;
+    timerRunning=true;
+    document.getElementById("timer-toggle-btn").textContent="⏸ Pausa";
+    timerInterval=setInterval(()=>{
       timerLeft--;
       updateTimerDisplay();
-      if (timerLeft <= 0) { clearInterval(timerInterval); timerRunning = false; document.getElementById("timer-toggle-btn").textContent = "✓ Finito"; }
-    }, 1000);
+      if (timerLeft<=0) { clearInterval(timerInterval); timerRunning=false; document.getElementById("timer-toggle-btn").textContent="✓ Finito"; }
+    },1000);
   }
 }
 function updateTimerDisplay() {
-  const m = Math.floor(timerLeft / 60), s = timerLeft % 60;
-  document.getElementById("timer-display").textContent = `${m}:${String(s).padStart(2,"0")}`;
-  const pct = timerTotal > 0 ? timerLeft / timerTotal : 1;
-  const offset = 283 - 283 * pct;
-  const prog = document.getElementById("timer-prog");
-  prog.style.strokeDashoffset = offset;
-  prog.style.stroke = timerLeft <= 10 ? "#ff2d78" : currentAccent;
+  const m=Math.floor(timerLeft/60), s=timerLeft%60;
+  document.getElementById("timer-display").textContent=`${m}:${String(s).padStart(2,"0")}`;
+  const pct=timerTotal>0?timerLeft/timerTotal:1;
+  const prog=document.getElementById("timer-prog");
+  prog.style.strokeDashoffset=283-283*pct;
+  prog.style.stroke=timerLeft<=10?"#ff2d78":currentAccent;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const fmt = iso => new Date(iso).toLocaleDateString("it-IT",{day:"2-digit",month:"short"});
 const fmtFull = iso => new Date(iso).toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"});
-const save = () => { LS.set("gt_workouts", workouts); LS.set("gt_templates", templates); };
+const save = () => { LS.set("gt_workouts",workouts); LS.set("gt_templates",templates); };
 
-// Rest time options: every 30s from 0:30 to 10:00
-const REST_OPTIONS = (() => {
-  const opts = [{ val: 0, label: "—" }];
-  for (let s = 30; s <= 600; s += 30) {
-    const m = Math.floor(s/60), sec = s%60;
-    opts.push({ val: s, label: `${m}:${String(sec).padStart(2,"0")}` });
-  }
-  return opts;
+const REST_OPTIONS = (()=>{
+  const o=[{val:0,label:"—"}];
+  for(let s=30;s<=600;s+=30){ const m=Math.floor(s/60),sc=s%60; o.push({val:s,label:`${m}:${String(sc).padStart(2,"0")}`}); }
+  return o;
 })();
 
-function restSelect(currentVal, idx, isLog) {
-  const fn = isLog ? `logExercises[${idx}].restSecs` : `tplExercises[${idx}].restSecs`;
+function restSelect(val,i,isLog){
+  const fn = isLog ? `logExercises[${i}].restSecs` : `tplExercises[${i}].restSecs`;
   return `<select class="field" style="font-size:12px;padding:8px 4px;text-align:center;" onchange="${fn}=+this.value">
-    ${REST_OPTIONS.map(o => `<option value="${o.val}" ${o.val===(currentVal||0)?'selected':''}>${o.label}</option>`).join("")}
+    ${REST_OPTIONS.map(o=>`<option value="${o.val}" ${o.val===(val||0)?'selected':''}>${o.label}</option>`).join("")}
   </select>`;
 }
 
-// All emoji (broad set)
 const ALL_EMOJIS = [
   "💪","🔙","🦵","🏋️","🔥","⚡","🎯","💥","🏃","🧗","🤸","🚴","🏊","⛹️","🤼","🥊","🏆",
   "🥇","🎽","👟","💦","🧘","🧖","🦾","🦿","❤️‍🔥","💢","🌪️","🌊","🌙","⭐","🎮","🎲","🃏",
@@ -493,20 +536,6 @@ const ALL_EMOJIS = [
   "🇳🇱","🇧🇪","🇨🇭","🇦🇹","🇸🇪","🇳🇴","🇩🇰","🇫🇮","🇵🇱","🇨🇿","🇭🇺","🇷🇴","🇬🇷","🇹🇷","🇸🇦",
   "🇦🇺","🇳🇿","🇨🇦","🇮🇳","🇿🇦","🇳🇬","🇪🇬","🇮🇱","🇮🇷","🇵🇰","🇦🇪","🇸🇬","🇹🇭","🇻🇳","🇮🇩"
 ];
-
-// ── Tab routing ────────────────────────────────────────────────────────────
-document.getElementById("tabs").addEventListener("click", e => {
-  const btn = e.target.closest(".tab"); if (!btn) return;
-  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
-  btn.classList.add("active");
-  const sec = document.getElementById("tab-" + btn.dataset.tab);
-  sec.classList.add("active");
-  sec.classList.remove("fade-up"); void sec.offsetWidth; sec.classList.add("fade-up");
-  if (btn.dataset.tab === "history")   renderHistory();
-  if (btn.dataset.tab === "progress")  renderProgress();
-  if (btn.dataset.tab === "templates") renderTemplates();
-});
 
 // ── Init ───────────────────────────────────────────────────────────────────
 function init() {
@@ -521,199 +550,198 @@ function renderTplPicker() {
   if (!templates.length) {
     el.innerHTML = `<div class="empty" style="padding:30px 0;grid-column:1/-1;">
       <div class="empty-icon">📂</div>
-      <div class="empty-txt">Nessuna scheda — creane una!</div>
-    </div>`;
-    el.innerHTML += `<button class="tpl-card free" onclick="selectFree()"><div style="font-size:26px;margin-bottom:8px;">✏️</div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;text-transform:uppercase;">Libero</div></button>`;
+      <div class="empty-txt">Nessuna scheda — creane una in "Schede"</div>
+    </div>
+    <button class="tpl-card free" onclick="selectFree()">
+      <div style="font-size:26px;margin-bottom:8px;">✏️</div>
+      <div style="font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px;text-transform:uppercase;">Libero</div>
+    </button>`;
     return;
   }
-  el.innerHTML = templates.map(t => `
+  el.innerHTML = templates.map(t=>`
     <button class="tpl-card" onclick="selectTpl('${t.id}')">
       <div style="font-size:26px;margin-bottom:8px;">${t.emoji||"🏋️"}</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;letter-spacing:1px;text-transform:uppercase;">${t.name}</div>
+      <div style="font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px;text-transform:uppercase;">${t.name}</div>
       <div style="color:var(--muted);font-size:12px;margin-top:4px;">${t.exercises.length} esercizi</div>
     </button>`).join("") +
   `<button class="tpl-card free" onclick="selectFree()">
     <div style="font-size:26px;margin-bottom:8px;">✏️</div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;text-transform:uppercase;">Libero</div>
+    <div style="font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px;text-transform:uppercase;">Libero</div>
   </button>`;
 }
 
 function selectTpl(id) {
-  const t = templates.find(t => t.id === id);
+  const t = templates.find(t=>t.id===id);
   logTpl = t;
-  // Copy exercises but clear setData (no pre-filled reps shown)
-  logExercises = t.exercises.map(e => ({
-    name: e.name, sets: e.sets, reps: "", weight: e.weight||"",
+  // No kg in template, no pre-filled reps, no add/remove exercise in session
+  logExercises = t.exercises.map(e=>({
+    name: e.name, sets: e.sets, reps:"", weight:"",
     restSecs: e.restSecs||0,
-    setData: Array.from({length: e.sets}, () => ({ reps: "", weight: e.weight||"" }))
+    fromTemplate: true,  // locked — no add/remove
+    setData: Array.from({length:e.sets},()=>({reps:"",weight:""}))
   }));
   showLogEditor(t.name);
 }
 function selectFree() {
-  logTpl = { name: "LIBERO" };
-  logExercises = [{ name:"", sets:3, reps:"", weight:"", restSecs:0, setData: Array.from({length:3},()=>({reps:"",weight:""})) }];
+  logTpl = { name:"LIBERO" };
+  logExercises = [{ name:"", sets:3, reps:"", weight:"", restSecs:0, fromTemplate:false, setData:Array.from({length:3},()=>({reps:"",weight:""})) }];
   showLogEditor("LIBERO");
 }
 function cancelLog() {
-  document.getElementById("log-tpl-pick").style.display = "";
-  document.getElementById("log-editor").style.display = "none";
+  document.getElementById("log-tpl-pick").style.display="";
+  document.getElementById("log-editor").style.display="none";
 }
 function showLogEditor(name) {
-  document.getElementById("log-tpl-pick").style.display = "none";
-  document.getElementById("log-editor").style.display = "";
-  document.getElementById("log-editor-title").textContent = name;
-  document.getElementById("log-note").value = "";
-  document.getElementById("log-actions").innerHTML = `<button class="btn-primary" onclick="saveSession()">💾 Salva sessione</button>`;
+  document.getElementById("log-tpl-pick").style.display="none";
+  document.getElementById("log-editor").style.display="";
+  document.getElementById("log-editor-title").textContent=name;
+  document.getElementById("log-note").value="";
+  document.getElementById("log-actions").innerHTML=`<button class="btn-primary" onclick="saveSession()">💾 Salva sessione</button>`;
   renderLogExList();
 }
 
 function renderLogExList() {
-  document.getElementById("log-ex-list").innerHTML = logExercises.map((ex, i) => {
-    const sets = ex.setData || Array.from({length: ex.sets||3}, ()=>({reps:"",weight:""}));
-    const timerBtn = ex.restSecs > 0
-      ? `<span class="timer-badge" onclick="openTimer(${ex.restSecs},'${ex.name.replace(/'/g,"\\'")}')">⏱ ${Math.floor(ex.restSecs/60)}:${String(ex.restSecs%60).padStart(2,"0")}</span>`
+  const isFree = !logExercises[0]?.fromTemplate;
+  document.getElementById("log-ex-list").innerHTML = logExercises.map((ex,i)=>{
+    const sets = ex.setData || Array.from({length:ex.sets||3},()=>({reps:"",weight:""}));
+    const timerBtn = ex.restSecs>0
+      ? `<span class="timer-badge" onclick="openTimer(${ex.restSecs},'${(ex.name||'').replace(/'/g,"\\'")}')">⏱ ${Math.floor(ex.restSecs/60)}:${String(ex.restSecs%60).padStart(2,"0")}</span>`
+      : "";
+    // Remove button only in free mode
+    const removeBtn = !ex.fromTemplate
+      ? `<button onclick="removeLogEx(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;">×</button>`
       : "";
     return `<div class="log-ex-block slide-in" id="logex-${i}">
       <div class="log-ex-name">
-        <span>${ex.name || "Esercizio"}</span>
-        <div style="display:flex;gap:8px;align-items:center;">
-          ${timerBtn}
-          <button onclick="removeLogEx(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;">×</button>
-        </div>
+        <span>${ex.name||"Esercizio"}</span>
+        <div style="display:flex;gap:8px;align-items:center;">${timerBtn}${removeBtn}</div>
       </div>
       <div class="sets-grid">
-        ${sets.map((sd, si) => `
+        ${sets.map((sd,si)=>`
           <div class="set-box">
             <div class="set-label">Serie ${si+1}</div>
             <input class="set-input" type="text" inputmode="text" placeholder="rip" value="${sd.reps||""}"
               oninput="logExercises[${i}].setData[${si}].reps=this.value" />
-            <input class="set-input field" type="number" min="0" step="0.5" placeholder="kg" value="${sd.weight||""}"
-              oninput="logExercises[${i}].setData[${si}].weight=this.value?+this.value:''"
-              style="margin-top:4px;font-size:13px;border-top:1px solid var(--border);border-radius:0 0 4px 4px;" />
+            <input class="set-kg" type="number" min="0" step="0.5" placeholder="kg" value="${sd.weight||""}"
+              oninput="logExercises[${i}].setData[${si}].weight=this.value?+this.value:''" />
           </div>`).join("")}
       </div>
     </div>`;
   }).join("");
+
+  // Add exercise button only in free mode
+  const actionsArea = document.getElementById("log-ex-list");
+  if (isFree) {
+    const addBtn = document.createElement("button");
+    addBtn.className = "btn-ghost";
+    addBtn.style.cssText = "width:100%;margin-bottom:18px;";
+    addBtn.textContent = "+ Aggiungi esercizio";
+    addBtn.onclick = addLogEx;
+    actionsArea.after(addBtn);
+    // avoid duplicates
+    document.querySelectorAll("#log-editor > .btn-ghost[data-addbtn]").forEach(b=>b.remove());
+    addBtn.setAttribute("data-addbtn","1");
+  } else {
+    document.querySelectorAll("[data-addbtn]").forEach(b=>b.remove());
+  }
 }
 
 function addLogEx() {
-  logExercises.push({ name:"", sets:3, reps:"", weight:"", restSecs:0, setData: Array.from({length:3},()=>({reps:"",weight:""})) });
+  logExercises.push({name:"",sets:3,reps:"",weight:"",restSecs:0,fromTemplate:false,setData:Array.from({length:3},()=>({reps:"",weight:""}))});
   renderLogExList();
-  // Focus the name input of the new exercise
-  const blocks = document.querySelectorAll(".log-ex-block");
-  const last = blocks[blocks.length-1];
-  if (last) { const inp = last.querySelector("input"); if (inp) inp.focus(); }
 }
 function removeLogEx(i) { logExercises.splice(i,1); renderLogExList(); }
 
-// Update sets count when user changes sets field in log (free mode)
-function updateLogSets(i, val) {
-  const n = Math.max(1, +val||1);
-  logExercises[i].sets = n;
-  const cur = logExercises[i].setData || [];
-  while (cur.length < n) cur.push({reps:"",weight:""});
-  logExercises[i].setData = cur.slice(0, n);
-  renderLogExList();
-}
-
 function saveSession() {
-  const valid = logExercises.filter(e => (e.name||"").trim());
+  const valid = logExercises.filter(e=>(e.name||"").trim());
   if (!valid.length) return;
   workouts.push({
     id: Date.now().toString(),
     date: new Date().toISOString(),
-    templateName: logTpl?.name || "LIBERO",
-    exercises: valid.map(e => ({
-      name: e.name,
-      sets: e.sets,
-      reps: e.reps,
-      weight: e.weight,
-      restSecs: e.restSecs||0,
-      setData: e.setData
-    })),
+    templateName: logTpl?.name||"LIBERO",
+    exercises: valid.map(e=>({ name:e.name, sets:e.sets, reps:e.reps, weight:e.weight, restSecs:e.restSecs||0, setData:e.setData })),
     note: document.getElementById("log-note").value
   });
   save();
-  document.getElementById("log-actions").innerHTML = `<div class="success-msg">✓ SESSIONE SALVATA!</div>`;
-  setTimeout(() => { cancelLog(); document.getElementById("log-actions").innerHTML = `<button class="btn-primary" onclick="saveSession()">💾 Salva sessione</button>`; }, 1800);
+  document.getElementById("log-actions").innerHTML=`<div class="success-msg">✓ SESSIONE SALVATA!</div>`;
+  setTimeout(()=>{ cancelLog(); document.getElementById("log-actions").innerHTML=`<button class="btn-primary" onclick="saveSession()">💾 Salva sessione</button>`; },1800);
 }
 
 // ── History ────────────────────────────────────────────────────────────────
-let openHist = null;
+let openHist=null;
 function renderHistory() {
-  const el = document.getElementById("history-list");
-  if (!workouts.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">Nessuna sessione registrata</div></div>`; return; }
-  el.innerHTML = [...workouts].reverse().map(w => `
+  const el=document.getElementById("history-list");
+  if (!workouts.length) { el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">Nessuna sessione registrata</div></div>`; return; }
+  el.innerHTML=[...workouts].reverse().map(w=>`
     <div class="hist-item ${openHist===w.id?'open':''}" id="hi-${w.id}">
       <div class="hist-header" onclick="toggleHist('${w.id}')">
         <div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;letter-spacing:1px;text-transform:uppercase;">${w.templateName}</div>
+          <div style="font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:19px;letter-spacing:1px;text-transform:uppercase;">${w.templateName}</div>
           <div style="color:var(--muted);font-size:13px;margin-top:2px;">${fmt(w.date)} · ${w.exercises.length} esercizi</div>
         </div>
         <div style="color:var(--muted);font-size:18px;">${openHist===w.id?"▲":"▼"}</div>
       </div>
-      ${openHist===w.id ? `
+      ${openHist===w.id?`
       <div class="hist-body">
-        ${w.exercises.map(ex => {
-          const setInfo = ex.setData ? ex.setData.map((sd,i)=>`<span class="pill" style="margin:2px;">S${i+1}: ${sd.reps||"—"} rip${sd.weight?` @ ${sd.weight}kg`:""}</span>`).join("") : `<span class="pill">${ex.sets}×${ex.reps||"—"}</span>`;
-          return `<div class="hist-row" style="flex-wrap:wrap;gap:6px;">
-            <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;">${ex.name}</span>
+        ${w.exercises.map(ex=>{
+          const setInfo=ex.setData?ex.setData.map((sd,i)=>`<span class="pill" style="margin:2px;">S${i+1}: ${sd.reps||"—"}${sd.weight?` @ ${sd.weight}kg`:""}</span>`).join(""):
+            `<span class="pill">${ex.sets}×${ex.reps||"—"}</span>`;
+          return `<div class="hist-row">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;">${ex.name}</span>
             <div style="display:flex;flex-wrap:wrap;gap:4px;">${setInfo}${ex.restSecs?`<span class="pill pill-accent">⏱ ${Math.floor(ex.restSecs/60)}:${String(ex.restSecs%60).padStart(2,"0")}</span>`:""}</div>
           </div>`;
         }).join("")}
-        ${w.note ? `<div style="margin-top:10px;color:var(--muted);font-size:13px;font-style:italic;">📝 ${w.note}</div>` : ""}
+        ${w.note?`<div style="margin-top:10px;color:var(--muted);font-size:13px;font-style:italic;">📝 ${w.note}</div>`:""}
         <button class="btn-ghost btn-danger" onclick="deleteWorkout('${w.id}')" style="margin-top:14px;font-size:11px;">Elimina sessione</button>
-      </div>` : ""}
+      </div>`:""}
     </div>`).join("");
 }
-function toggleHist(id) { openHist = openHist===id?null:id; renderHistory(); }
+function toggleHist(id) { openHist=openHist===id?null:id; renderHistory(); }
 function deleteWorkout(id) { workouts=workouts.filter(w=>w.id!==id); save(); openHist=null; renderHistory(); }
 
 // ── Progress ───────────────────────────────────────────────────────────────
 function renderProgress() {
-  const total = workouts.length;
-  const week  = workouts.filter(w=>(Date.now()-new Date(w.date))/86400000<=7).length;
-  const vol   = Math.round(workouts.reduce((s,w)=>s+w.exercises.reduce((ss,e)=>ss+(e.sets||0)*(+(e.reps||0))*(+(e.weight||0)),0),0));
-  document.getElementById("stat-total").textContent = total;
-  document.getElementById("stat-week").textContent  = week;
-  document.getElementById("stat-vol").textContent   = vol.toLocaleString("it");
-  const allEx = [...new Set(workouts.flatMap(w=>w.exercises.map(e=>e.name)))].filter(Boolean).sort();
-  const sel = document.getElementById("prog-select");
-  const cur = sel.value;
-  sel.innerHTML = `<option value="">— seleziona —</option>` + allEx.map(e=>`<option value="${e}" ${e===cur?"selected":""}>${e}</option>`).join("");
-  document.getElementById("prog-empty").style.display = total?"none":"";
+  const total=workouts.length;
+  const week=workouts.filter(w=>(Date.now()-new Date(w.date))/86400000<=7).length;
+  const vol=Math.round(workouts.reduce((s,w)=>s+w.exercises.reduce((ss,e)=>ss+(e.sets||0)*(+(e.reps||0))*(+(e.weight||0)),0),0));
+  document.getElementById("stat-total").textContent=total;
+  document.getElementById("stat-week").textContent=week;
+  document.getElementById("stat-vol").textContent=vol.toLocaleString("it");
+  const allEx=[...new Set(workouts.flatMap(w=>w.exercises.map(e=>e.name)))].filter(Boolean).sort();
+  const sel=document.getElementById("prog-select"), cur=sel.value;
+  sel.innerHTML=`<option value="">— seleziona —</option>`+allEx.map(e=>`<option value="${e}" ${e===cur?"selected":""}>${e}</option>`).join("");
+  document.getElementById("prog-empty").style.display=total?"none":"";
   renderCharts();
 }
 function renderCharts() {
-  const sel = document.getElementById("prog-select").value;
+  const sel=document.getElementById("prog-select").value;
   document.getElementById("chart-peso").style.display="none";
   document.getElementById("chart-vol").style.display="none";
   document.getElementById("prog-best").style.display="none";
   if (!sel) return;
-  const pts = workouts.filter(w=>w.exercises.some(e=>e.name===sel)).map(w=>{
+  const pts=workouts.filter(w=>w.exercises.some(e=>e.name===sel)).map(w=>{
     const ex=w.exercises.find(e=>e.name===sel);
-    const w_ = +(ex?.weight||0);
-    const r_ = +(ex?.reps||0);
-    return { date:fmt(w.date), peso:w_, vol:(ex?.sets||0)*r_*w_ };
+    const wt=+(ex?.weight||0), rp=+(ex?.reps||0);
+    return {date:fmt(w.date),peso:wt,vol:(ex?.sets||0)*rp*wt};
   });
   if (!pts.length) return;
   const best=Math.max(...pts.map(p=>p.peso));
-  if (best>0) { document.getElementById("prog-best").style.display="flex"; document.getElementById("prog-best-val").textContent=best+" kg"; }
+  if (best>0){document.getElementById("prog-best").style.display="flex";document.getElementById("prog-best-val").textContent=best+" kg";}
   document.getElementById("chart-peso").style.display="";
   document.getElementById("svg-peso").innerHTML=makeSVGChart(pts.map(p=>({x:p.date,y:p.peso})),currentAccent);
   document.getElementById("chart-vol").style.display="";
   document.getElementById("svg-vol").innerHTML=makeSVGChart(pts.map(p=>({x:p.date,y:p.vol})),"#00e5ff");
 }
-function makeSVGChart(data,color) {
+function makeSVGChart(data,color){
   const W=320,H=140,PL=38,PR=10,PT=10,PB=28,iW=W-PL-PR,iH=H-PT-PB;
   const ys=data.map(d=>d.y),minY=Math.min(...ys),maxY=Math.max(...ys),rangeY=maxY-minY||1,n=data.length;
-  const cx=i=>PL+(i/Math.max(n-1,1))*iW, cy=y=>PT+iH-((y-minY)/rangeY)*iH;
+  const cx=i=>PL+(i/Math.max(n-1,1))*iW,cy=y=>PT+iH-((y-minY)/rangeY)*iH;
   const pts=data.map((d,i)=>`${cx(i)},${cy(d.y)}`).join(" ");
   const area=`${PL},${PT+iH} `+data.map((d,i)=>`${cx(i)},${cy(d.y)}`).join(" ")+` ${cx(n-1)},${PT+iH}`;
   const gid="g"+Math.random().toString(36).slice(2);
   let ticks="";
-  data.forEach((d,i)=>{ if(n<=6||i%Math.ceil(n/5)===0) ticks+=`<text x="${cx(i)}" y="${H-6}" text-anchor="middle" fill="#444" font-size="9" font-family="'Barlow Condensed',sans-serif">${d.x}</text>`; });
-  const yLabels=[minY,minY+rangeY/2,maxY].map(v=>`<text x="${PL-4}" y="${cy(v)+4}" text-anchor="end" fill="#444" font-size="9" font-family="'Barlow Condensed',sans-serif">${Math.round(v)}</text>`).join("");
+  data.forEach((d,i)=>{if(n<=6||i%Math.ceil(n/5)===0)ticks+=`<text x="${cx(i)}" y="${H-6}" text-anchor="middle" fill="#555" font-size="9" font-family="'Barlow Condensed',sans-serif">${d.x}</text>`;});
+  const yLbls=[minY,minY+rangeY/2,maxY].map(v=>`<text x="${PL-4}" y="${cy(v)+4}" text-anchor="end" fill="#555" font-size="9" font-family="'Barlow Condensed',sans-serif">${Math.round(v)}</text>`).join("");
   return `<svg viewBox="0 0 ${W} ${H}" class="svg-chart" style="max-height:160px;">
     <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${color}" stop-opacity=".3"/>
@@ -722,22 +750,22 @@ function makeSVGChart(data,color) {
     <polygon points="${area}" fill="url(#${gid})"/>
     <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
     ${data.map((d,i)=>`<circle cx="${cx(i)}" cy="${cy(d.y)}" r="3.5" fill="${color}"/>`).join("")}
-    ${yLabels}${ticks}</svg>`;
+    ${yLbls}${ticks}</svg>`;
 }
 
 // ── Templates ──────────────────────────────────────────────────────────────
 function renderTemplates() {
-  document.getElementById("tpl-count").textContent = templates.length+" schede salvate";
+  document.getElementById("tpl-count").textContent=templates.length+" schede salvate";
   document.getElementById("tpl-list").style.display="";
   document.getElementById("tpl-editor").style.display="none";
-  document.getElementById("tpl-list").innerHTML = !templates.length
-    ? `<div class="empty"><div class="empty-icon">📂</div><div class="empty-txt">Nessuna scheda creata</div></div>`
-    : templates.map(t=>`
+  document.getElementById("tpl-list").innerHTML=!templates.length
+    ?`<div class="empty"><div class="empty-icon">📂</div><div class="empty-txt">Nessuna scheda creata</div></div>`
+    :templates.map(t=>`
     <div class="card" style="padding:16px 18px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
       <div style="display:flex;gap:14px;align-items:flex-start;min-width:0;">
         <div style="font-size:30px;flex-shrink:0;">${t.emoji||"🏋️"}</div>
         <div style="min-width:0;">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">${t.name}</div>
+          <div style="font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:19px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">${t.name}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">${t.exercises.map(e=>`<span class="pill">${e.name||"—"}</span>`).join("")}</div>
         </div>
       </div>
@@ -747,75 +775,63 @@ function renderTemplates() {
       </div>
     </div>`).join("");
 }
-
-function newTemplate() {
-  editingTpl = { id: Date.now().toString(), name:"", emoji:"🏋️", exercises:[{ name:"", sets:3, reps:"", weight:"", restSecs:0 }] };
-  tplExercises = editingTpl.exercises.map(e=>({...e}));
+function newTemplate(){
+  editingTpl={id:Date.now().toString(),name:"",emoji:"🏋️",exercises:[{name:"",sets:3,reps:"",restSecs:0}]};
+  tplExercises=editingTpl.exercises.map(e=>({...e}));
   openTplEditor();
 }
-function editTpl(id) {
-  editingTpl = { ...templates.find(t=>t.id===id) };
-  tplExercises = editingTpl.exercises.map(e=>({...e}));
+function editTpl(id){
+  editingTpl={...templates.find(t=>t.id===id)};
+  tplExercises=editingTpl.exercises.map(e=>({...e}));
   openTplEditor();
 }
-function openTplEditor() {
+function openTplEditor(){
   document.getElementById("tpl-list").style.display="none";
   document.getElementById("tpl-editor").style.display="";
-  document.getElementById("tpl-name-input").value = editingTpl.name;
-  renderEmojiPicker();
-  renderTplExList();
+  document.getElementById("tpl-name-input").value=editingTpl.name;
+  renderEmojiPicker(); renderTplExList();
 }
-function closeTplEditor() { renderTemplates(); }
-
-function renderEmojiPicker() {
-  document.getElementById("emoji-picker").innerHTML = ALL_EMOJIS.map(em=>`
-    <button class="emj-btn ${editingTpl.emoji===em?'active':''}" onclick="setTplEmoji('${em}')">${em}</button>`).join("");
+function closeTplEditor(){ renderTemplates(); }
+function renderEmojiPicker(){
+  document.getElementById("emoji-picker").innerHTML=ALL_EMOJIS.map(em=>
+    `<button class="emj-btn ${editingTpl.emoji===em?'active':''}" onclick="setTplEmoji('${em}')">${em}</button>`).join("");
 }
-function setTplEmoji(em) {
-  editingTpl.emoji = em;
-  document.querySelectorAll(".emj-btn").forEach(b => {
-    b.classList.toggle("active", b.textContent===em);
-  });
+function setTplEmoji(em){
+  editingTpl.emoji=em;
+  document.querySelectorAll(".emj-btn").forEach(b=>b.classList.toggle("active",b.textContent===em));
 }
-
-function renderTplExList() {
-  document.getElementById("tpl-ex-list").innerHTML = tplExercises.map((ex,i)=>`
+function renderTplExList(){
+  // Note: no kg field in template — only name, sets, reps, rest
+  document.getElementById("tpl-ex-list").innerHTML=tplExercises.map((ex,i)=>`
     <div class="tpl-ex-row slide-in">
       <input class="field" value="${ex.name||""}" oninput="tplExercises[${i}].name=this.value" placeholder="Esercizio" />
       <input class="field" type="number" min="1" value="${ex.sets||3}" oninput="tplExercises[${i}].sets=+this.value" style="text-align:center;" />
       <input class="field" type="text" inputmode="text" value="${ex.reps||""}" oninput="tplExercises[${i}].reps=this.value" placeholder="es. 8/6/4" style="text-align:center;" />
-      <input class="field" type="number" min="0" step="0.5" value="${ex.weight||""}" oninput="tplExercises[${i}].weight=this.value?+this.value:''" placeholder="kg" style="text-align:center;" />
-      ${restSelect(ex.restSecs, i, false)}
+      ${restSelect(ex.restSecs,i,false)}
       <button onclick="removeTplEx(${i})" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:20px;">×</button>
     </div>`).join("");
 }
-function addTplEx() { tplExercises.push({name:"",sets:3,reps:"",weight:"",restSecs:0}); renderTplExList(); }
-function removeTplEx(i) { tplExercises.splice(i,1); renderTplExList(); }
-function saveTpl() {
-  const name = document.getElementById("tpl-name-input").value.trim().toUpperCase();
+function addTplEx(){ tplExercises.push({name:"",sets:3,reps:"",restSecs:0}); renderTplExList(); }
+function removeTplEx(i){ tplExercises.splice(i,1); renderTplExList(); }
+function saveTpl(){
+  const name=document.getElementById("tpl-name-input").value.trim().toUpperCase();
   if (!name) return;
-  editingTpl.name = name;
-  editingTpl.exercises = tplExercises;
-  const idx = templates.findIndex(t=>t.id===editingTpl.id);
+  editingTpl.name=name; editingTpl.exercises=tplExercises;
+  const idx=templates.findIndex(t=>t.id===editingTpl.id);
   if (idx>=0) templates[idx]=editingTpl; else templates.push(editingTpl);
   save(); renderTplPicker(); renderTemplates();
 }
-function deleteTpl(id) { templates=templates.filter(t=>t.id!==id); save(); renderTemplates(); renderTplPicker(); }
+function deleteTpl(id){ templates=templates.filter(t=>t.id!==id); save(); renderTemplates(); renderTplPicker(); }
 
-// ── PWA Install ────────────────────────────────────────────────────────────
-window.addEventListener("beforeinstallprompt", e => {
-  e.preventDefault(); deferredPrompt = e;
+// ── PWA ────────────────────────────────────────────────────────────────────
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault(); deferredPrompt=e;
   if (!localStorage.getItem("gt_install_dismissed")) document.getElementById("install-banner").classList.add("show");
 });
-function installApp() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(()=>{ deferredPrompt=null; dismissInstall(); });
-}
-function dismissInstall() { localStorage.setItem("gt_install_dismissed","1"); document.getElementById("install-banner").classList.remove("show"); }
-window.addEventListener("appinstalled", ()=>dismissInstall());
-
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+function installApp(){ if(!deferredPrompt)return; deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>{deferredPrompt=null;dismissInstall();}); }
+function dismissInstall(){ localStorage.setItem("gt_install_dismissed","1"); document.getElementById("install-banner").classList.remove("show"); }
+window.addEventListener("appinstalled",()=>dismissInstall());
+if("serviceWorker"in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 
 init();
 </script>
