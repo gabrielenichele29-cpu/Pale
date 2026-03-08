@@ -697,31 +697,20 @@ async function boot() {
   applyTheme();
   showLoading();
 
-  // Handle OAuth redirect
-  const { data: { session } } = await sb.auth.getSession();
-
-  if (session?.user) {
-    currentUser = session.user;
-    await loadUserData();
-    updateGreeting(currentUser);
-    document.getElementById("today-date").textContent = fmtFull(new Date().toISOString());
-    renderTplPicker();
-    showApp();
-  } else {
-    showLogin();
-  }
-
-  // Listen for auth changes
+  // onAuthStateChange handles everything including OAuth redirects
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === "SIGNED_IN" && session?.user) {
+    if (session?.user) {
       currentUser = session.user;
-      showLoading();
       await loadUserData();
       updateGreeting(currentUser);
       document.getElementById("today-date").textContent = fmtFull(new Date().toISOString());
       renderTplPicker();
       showApp();
-    } else if (event === "SIGNED_OUT") {
+      // Clean up URL hash after OAuth redirect
+      if (window.location.hash) {
+        history.replaceState(null, "", window.location.pathname);
+      }
+    } else {
       showLogin();
     }
   });
