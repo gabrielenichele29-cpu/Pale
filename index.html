@@ -427,7 +427,14 @@
 const SUPA_URL  = "https://idcneuhbhxpohtnrsboz.supabase.co";
 const SUPA_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkY25ldWhiaHhwb2h0bnJzYm96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODc2MDIsImV4cCI6MjA4ODU2MzYwMn0.RKu60RqBoX7KmJ3zToLV446GcKtpFZstW44em0Pl3ik";
 const { createClient } = supabase;
-const sb = createClient(SUPA_URL, SUPA_KEY);
+const sb = createClient(SUPA_URL, SUPA_KEY, {
+  auth: {
+    flowType: "pkce",
+    detectSessionInUrl: true,
+    persistSession: true,
+    autoRefreshToken: true,
+  }
+});
 
 // ── State ───────────────────────────────────────────────────────────────────
 let currentUser = null;
@@ -478,7 +485,10 @@ function closeSettings() { document.getElementById("settings-panel").classList.r
 async function loginWithGoogle() {
   await sb.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: "https://gabrielenichele29-cpu.github.io/GymTrack/" }
+    options: {
+      redirectTo: "https://gabrielenichele29-cpu.github.io/GymTrack/",
+      skipBrowserRedirect: false,
+    }
   });
 }
 
@@ -693,42 +703,30 @@ window.addEventListener("appinstalled",()=>dismissInstall());
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
+async function enterApp(user) {
+  currentUser = user;
+  await loadUserData();
+  updateGreeting(currentUser);
+  document.getElementById("today-date").textContent = fmtFull(new Date().toISOString());
+  renderTplPicker();
+  showApp();
+}
+
 async function boot() {
   applyTheme();
   showLoading();
 
-  // Parse token from URL hash (Supabase OAuth redirect)
-  if (window.location.hash && window.location.hash.includes("access_token")) {
-    const params = new URLSearchParams(window.location.hash.substring(1));
-    const access_token = params.get("access_token");
-    const refresh_token = params.get("refresh_token");
-    if (access_token) {
-      const { data, error } = await sb.auth.setSession({ access_token, refresh_token });
-      history.replaceState(null, "", window.location.pathname);
-      if (data?.session?.user) {
-        currentUser = data.session.user;
-        await loadUserData();
-        updateGreeting(currentUser);
-        document.getElementById("today-date").textContent = fmtFull(new Date().toISOString());
-        renderTplPicker();
-        showApp();
-        return;
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
+      if (session?.user && !currentUser) {
+        await enterApp(session.user);
       }
+    } else if (event === "SIGNED_OUT") {
+      currentUser = null;
+      workouts = []; templates = [];
+      showLogin();
     }
-  }
-
-  // Check existing session
-  const { data: { session } } = await sb.auth.getSession();
-  if (session?.user) {
-    currentUser = session.user;
-    await loadUserData();
-    updateGreeting(currentUser);
-    document.getElementById("today-date").textContent = fmtFull(new Date().toISOString());
-    renderTplPicker();
-    showApp();
-  } else {
-    showLogin();
-  }
+  });
 }
 
 boot();
