@@ -238,12 +238,9 @@
     .emj-btn { font-size: 22px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 5px 9px; cursor: pointer; transition: border-color .12s, background .12s; }
     .emj-btn.active { background: rgba(255,61,0,.15); border-color: var(--accent); }
 
-    /* Nav overlay — stays BEHIND the dropdown */
-    #nav-overlay { display:none; position:fixed; inset:0; z-index:150; }
-    #nav-overlay.open { display:block; }
-    /* Dropdown above everything, fully tappable on iOS */
-    #nav-dropdown { z-index:500 !important; pointer-events:auto; }
-    .nav-item { pointer-events:auto; -webkit-tap-highlight-color:rgba(255,61,0,.2); touch-action:manipulation; }
+    /* Dropdown — fully on top, iOS-safe */
+    #nav-dropdown { z-index:9999; pointer-events:auto; }
+    .nav-item { pointer-events:auto; touch-action:manipulation; -webkit-tap-highlight-color:rgba(255,61,0,.15); user-select:none; }
   </style>
 </head>
 <body>
@@ -251,17 +248,17 @@
   <header>
     <div class="header-row">
       <div style="position:relative;">
-        <button class="logo-btn" onclick="toggleNav()" id="logo-btn">
+        <button class="logo-btn" onclick="toggleNav(event)" id="logo-btn">
           <div class="logo-text"><span>GYM</span><span>TRACK</span></div>
           <div class="logo-dot"></div>
           <span class="logo-arrow" id="logo-arrow">▼</span>
         </button>
         <!-- Dropdown -->
         <div id="nav-dropdown">
-          <button class="nav-item active" data-tab="log"       onclick="goTo('log')">      <span class="nav-item-icon">🏋️</span> Sessione</button>
-          <button class="nav-item"        data-tab="templates" onclick="goTo('templates')"><span class="nav-item-icon">📂</span> Schede</button>
-          <button class="nav-item"        data-tab="progress"  onclick="goTo('progress')"> <span class="nav-item-icon">📈</span> Progressi</button>
-          <button class="nav-item"        data-tab="history"   onclick="goTo('history')">  <span class="nav-item-icon">📋</span> Storico</button>
+          <button class="nav-item active" data-tab="log"       ontouchend="goTo('log');return false;"       onclick="goTo('log')">      <span class="nav-item-icon">🏋️</span> Sessione</button>
+          <button class="nav-item"        data-tab="templates" ontouchend="goTo('templates');return false;" onclick="goTo('templates')"><span class="nav-item-icon">📂</span> Schede</button>
+          <button class="nav-item"        data-tab="progress"  ontouchend="goTo('progress');return false;"  onclick="goTo('progress')"> <span class="nav-item-icon">📈</span> Progressi</button>
+          <button class="nav-item"        data-tab="history"   ontouchend="goTo('history');return false;"   onclick="goTo('history')">  <span class="nav-item-icon">📋</span> Storico</button>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
@@ -271,8 +268,6 @@
     </div>
   </header>
 
-  <!-- Nav overlay -->
-  <div id="nav-overlay" onclick="closeNav()"></div>
 
   <main id="main">
     <!-- LOG -->
@@ -451,32 +446,39 @@ function closeSettings() { document.getElementById("settings-panel").classList.r
 const NAV_LABELS = { log:"Sessione", templates:"Schede", progress:"Progressi", history:"Storico" };
 let navOpen = false;
 
-function toggleNav() {
+function toggleNav(e) {
+  if (e) { e.stopPropagation(); }
   navOpen = !navOpen;
   document.getElementById("nav-dropdown").classList.toggle("open", navOpen);
-  document.getElementById("nav-overlay").classList.toggle("open", navOpen);
   document.getElementById("logo-arrow").classList.toggle("open", navOpen);
 }
 function closeNav() {
   navOpen = false;
   document.getElementById("nav-dropdown").classList.remove("open");
-  document.getElementById("nav-overlay").classList.remove("open");
   document.getElementById("logo-arrow").classList.remove("open");
 }
-function goTo(tab) {
-  // Small delay so iOS registers the tap before DOM changes
-  setTimeout(() => {
+// Close when tapping outside
+document.addEventListener("touchstart", function(e) {
+  if (navOpen && !document.getElementById("nav-dropdown").contains(e.target) && !document.getElementById("logo-btn").contains(e.target)) {
     closeNav();
-    document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.tab===tab));
-    document.getElementById("current-section-lbl").textContent = NAV_LABELS[tab] || "";
-    document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
-    const sec = document.getElementById("tab-"+tab);
-    sec.classList.add("active");
-    sec.classList.remove("fade-up"); void sec.offsetWidth; sec.classList.add("fade-up");
-    if (tab==="history")   renderHistory();
-    if (tab==="progress")  renderProgress();
-    if (tab==="templates") renderTemplates();
-  }, 10);
+  }
+});
+document.addEventListener("click", function(e) {
+  if (navOpen && !document.getElementById("nav-dropdown").contains(e.target) && !document.getElementById("logo-btn").contains(e.target)) {
+    closeNav();
+  }
+});
+function goTo(tab) {
+  closeNav();
+  document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.tab===tab));
+  document.getElementById("current-section-lbl").textContent = NAV_LABELS[tab] || "";
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  const sec = document.getElementById("tab-"+tab);
+  sec.classList.add("active");
+  sec.classList.remove("fade-up"); void sec.offsetWidth; sec.classList.add("fade-up");
+  if (tab==="history")   renderHistory();
+  if (tab==="progress")  renderProgress();
+  if (tab==="templates") renderTemplates();
 }
 
 // ── Timer ──────────────────────────────────────────────────────────────────
