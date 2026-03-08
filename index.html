@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>GymTrack</title>
-
-  <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#ff3d00" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -13,7 +11,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="GymTrack" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
 
@@ -33,19 +30,16 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; overscroll-behavior: none; }
     body { padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
-
     ::-webkit-scrollbar { width: 3px; }
     ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
-
     input, select, textarea, button { font-family: 'Barlow', sans-serif; }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent) !important; box-shadow: 0 0 0 2px rgba(255,61,0,0.15); }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent) !important; box-shadow: 0 0 0 2px rgba(255,61,0,0.12); }
 
-    /* Animations */
-    @keyframes fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes slideIn  { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:translateX(0); } }
-    @keyframes pulse    { 0%,100%{opacity:1;} 50%{opacity:.4;} }
-    @keyframes spin     { to { transform: rotate(360deg); } }
-    @keyframes popIn    { 0%{transform:scale(.85);opacity:0;} 70%{transform:scale(1.04);} 100%{transform:scale(1);opacity:1;} }
+    @keyframes fadeUp  { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
+    @keyframes slideIn { from{opacity:0;transform:translateX(-10px);} to{opacity:1;transform:translateX(0);} }
+    @keyframes pulse   { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+    @keyframes popIn   { 0%{transform:scale(.85);opacity:0;} 70%{transform:scale(1.04);} 100%{transform:scale(1);opacity:1;} }
+    @keyframes tickDown { from{stroke-dashoffset:0;} to{stroke-dashoffset:283;} }
 
     .fade-up  { animation: fadeUp .3s ease both; }
     .slide-in { animation: slideIn .22s ease both; }
@@ -55,42 +49,58 @@
     header {
       background: linear-gradient(180deg, #1c0a00 0%, var(--bg) 100%);
       border-bottom: 1px solid var(--border);
-      padding: 16px 18px 0;
-      flex-shrink: 0;
+      padding: 16px 18px 0; flex-shrink: 0;
       position: sticky; top: 0; z-index: 100;
     }
-    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; justify-content: space-between; }
+    .logo-left { display: flex; align-items: center; gap: 10px; }
     .logo-text { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; letter-spacing: 2px; }
     .logo-text span:first-child { color: var(--accent); }
     .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
 
+    /* Settings button */
+    .settings-btn {
+      background: transparent; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--muted); cursor: pointer; padding: 6px 10px; font-size: 18px;
+      transition: border-color .15s, color .15s;
+    }
+    .settings-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Settings panel */
+    #settings-panel {
+      display: none; position: fixed; top: 0; right: 0; bottom: 0; width: min(320px, 100vw);
+      background: #0f0f0f; border-left: 1px solid var(--border);
+      z-index: 300; padding: 24px 20px; overflow-y: auto;
+      animation: slideInRight .25s ease;
+    }
+    #settings-panel.open { display: block; }
+    #settings-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:299; }
+    #settings-overlay.open { display:block; }
+    @keyframes slideInRight { from{transform:translateX(100%);} to{transform:translateX(0);} }
+
+    .color-swatch {
+      width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 3px solid transparent;
+      transition: border-color .15s, transform .12s;
+    }
+    .color-swatch:hover { transform: scale(1.12); }
+    .color-swatch.active { border-color: #fff; }
+
     .tabs { display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
     .tabs::-webkit-scrollbar { display: none; }
     .tab {
-      flex-shrink: 0;
-      background: none; border: none; border-bottom: 2px solid transparent;
+      flex-shrink: 0; background: none; border: none; border-bottom: 2px solid transparent;
       color: var(--muted); cursor: pointer; padding: 8px 14px 10px;
       font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 12px;
-      letter-spacing: 1.5px; text-transform: uppercase; transition: color .15s, border-color .15s;
-      white-space: nowrap;
+      letter-spacing: 1.5px; text-transform: uppercase; transition: color .15s, border-color .15s; white-space: nowrap;
     }
     .tab:hover, .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
     main { flex: 1; overflow-y: auto; padding: 20px 18px 40px; -webkit-overflow-scrolling: touch; }
 
-    /* Cards */
-    .card {
-      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-      transition: border-color .15s, transform .15s;
-    }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; transition: border-color .15s, transform .15s; }
     .card:hover { border-color: #2e2e2e; transform: translateY(-1px); }
+    .accent-card { background: linear-gradient(135deg,#1a0800 0%,#0d0d0d 100%); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; }
 
-    .accent-card {
-      background: linear-gradient(135deg, #1a0800 0%, #0d0d0d 100%);
-      border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px;
-    }
-
-    /* Buttons */
     .btn-primary {
       background: var(--accent); color: #fff; border: none; border-radius: 7px;
       padding: 11px 22px; cursor: pointer;
@@ -98,22 +108,19 @@
       letter-spacing: 1.2px; text-transform: uppercase;
       transition: background .15s, transform .12s, box-shadow .15s;
     }
-    .btn-primary:hover  { background: #ff5722; transform: translateY(-1px); box-shadow: 0 4px 18px rgba(255,61,0,.35); }
+    .btn-primary:hover  { filter: brightness(1.15); transform: translateY(-1px); box-shadow: 0 4px 18px rgba(255,61,0,.3); }
     .btn-primary:active { transform: translateY(0); }
 
     .btn-ghost {
-      background: transparent; color: var(--muted);
-      border: 1px solid var(--border); border-radius: 7px;
+      background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 7px;
       padding: 8px 16px; cursor: pointer;
       font-family: 'Barlow Condensed', sans-serif; font-size: 13px;
-      letter-spacing: 1px; text-transform: uppercase;
-      transition: border-color .15s, color .15s;
+      letter-spacing: 1px; text-transform: uppercase; transition: border-color .15s, color .15s;
     }
     .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
     .btn-danger { color: #c33; border-color: #300; }
     .btn-danger:hover { background: rgba(255,0,0,.08); border-color: #f33; color: #f33; }
 
-    /* Form fields */
     .field {
       background: #0a0a0a; border: 1px solid var(--border); border-radius: 7px;
       color: var(--text); padding: 9px 12px; font-family: 'Barlow', sans-serif; font-size: 14px;
@@ -121,9 +128,49 @@
     }
     .field::placeholder { color: var(--muted); }
 
-    /* Ex row grid */
-    .ex-grid { display: grid; grid-template-columns: 1fr 54px 54px 64px 28px; gap: 6px; align-items: center; margin-bottom: 8px; }
+    /* Template editor exercise row — now wider for timer */
+    .tpl-ex-row { display: grid; grid-template-columns: 1fr 50px 80px 58px 90px 28px; gap: 5px; align-items: center; margin-bottom: 8px; }
+    .tpl-ex-hdr { display: grid; grid-template-columns: 1fr 50px 80px 58px 90px 28px; gap: 5px; margin-bottom: 6px; }
     .col-hdr { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+
+    /* Log session exercise block */
+    .log-ex-block { border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .log-ex-name { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: .5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .sets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px,1fr)); gap: 8px; }
+    .set-box { background: #0a0a0a; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; text-align: center; }
+    .set-label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+    .set-input { width: 100%; background: transparent; border: none; color: var(--text); font-size: 16px; font-weight: 600; text-align: center; }
+    .set-input:focus { outline: none; }
+
+    /* Timer */
+    .timer-badge {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 12px; letter-spacing: 1px;
+      color: var(--accent); border: 1px solid rgba(255,61,0,.3); border-radius: 20px;
+      padding: 2px 10px; cursor: pointer; transition: background .15s;
+    }
+    .timer-badge:hover { background: rgba(255,61,0,.1); }
+
+    /* Timer modal */
+    #timer-modal {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85);
+      z-index: 400; align-items: center; justify-content: center;
+    }
+    #timer-modal.open { display: flex; }
+    .timer-box {
+      background: #111; border: 1px solid var(--border); border-radius: 20px;
+      padding: 36px 40px; text-align: center; min-width: 260px;
+      animation: popIn .3s ease;
+    }
+    .timer-title { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; }
+    .timer-circle { position: relative; width: 140px; height: 140px; margin: 0 auto 20px; }
+    .timer-circle svg { transform: rotate(-90deg); }
+    .timer-ring { fill: none; stroke: var(--border); stroke-width: 8; }
+    .timer-prog { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 283; transition: stroke-dashoffset .9s linear, stroke .3s; }
+    .timer-display {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 1px;
+    }
+    .timer-controls { display: flex; gap: 10px; justify-content: center; }
 
     /* Stat cards */
     .stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
@@ -133,70 +180,56 @@
 
     /* Template picker */
     .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 10px; }
-    .tpl-card {
-      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-      padding: 16px 14px; cursor: pointer; color: var(--text); text-align: left;
-      transition: border-color .15s, transform .15s; width: 100%;
-    }
+    .tpl-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 14px; cursor: pointer; color: var(--text); text-align: left; transition: border-color .15s, transform .15s; width: 100%; }
     .tpl-card:hover { border-color: var(--accent); transform: translateY(-2px); }
     .tpl-card.free { background: transparent; border: 1px dashed var(--dim); color: var(--muted); }
 
-    /* Tag pill */
     .pill { font-size: 11px; color: var(--muted); background: #1a1a1a; padding: 3px 8px; border-radius: 4px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: .5px; }
     .pill-accent { background: rgba(255,61,0,.12); border: 1px solid rgba(255,61,0,.3); color: var(--accent); }
 
-    /* History item */
     .hist-item { border: 1px solid var(--border); border-left: 3px solid var(--dim); border-radius: 8px; margin-bottom: 10px; overflow: hidden; transition: border-color .15s; }
     .hist-item.open { border-left-color: var(--accent); }
     .hist-header { padding: 14px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
     .hist-body { padding: 0 16px 14px; border-top: 1px solid var(--border); }
     .hist-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
 
-    /* Chart container */
     .chart-wrap { width: 100%; overflow: hidden; }
+    .svg-chart { width: 100%; overflow: visible; }
+    .success-msg { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: 1px; animation: popIn .4s ease; }
 
-    /* Loading */
-    .loader { text-align: center; padding: 80px 0; }
-    .loader-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin: 0 4px; animation: pulse 1s ease infinite; }
-    .loader-dot:nth-child(2) { animation-delay: .2s; }
-    .loader-dot:nth-child(3) { animation-delay: .4s; }
+    section { display: none; }
+    section.active { display: block; }
+    .section-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
 
-    /* Empty state */
-    .empty { text-align: center; padding: 60px 0; color: var(--dim); }
+    .empty { text-align: center; padding: 60px 0; }
     .empty-icon { font-size: 48px; margin-bottom: 14px; }
     .empty-txt { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
 
-    /* Install banner */
     #install-banner {
       display: none; position: fixed; bottom: 0; left: 0; right: 0;
-      background: linear-gradient(135deg, #1a0800, #111);
-      border-top: 1px solid var(--accent);
-      padding: 14px 18px calc(14px + var(--safe-bottom));
-      z-index: 200; animation: fadeUp .3s ease;
+      background: linear-gradient(135deg,#1a0800,#111); border-top: 1px solid var(--accent);
+      padding: 14px 18px calc(14px + var(--safe-bottom)); z-index: 200;
     }
     #install-banner.show { display: flex; align-items: center; gap: 14px; }
     .install-text { flex: 1; }
     .install-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 1px; }
     .install-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-    /* Chart (pure SVG) */
-    .svg-chart { width: 100%; overflow: visible; }
-
-    /* Success msg */
-    .success-msg { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: 1px; animation: popIn .4s ease; }
-
-    section { display: none; }
-    section.active { display: block; }
-
-    .section-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+    /* Emoji picker scrollable */
+    .emoji-scroll { display: flex; gap: 8px; flex-wrap: wrap; max-height: 130px; overflow-y: auto; margin-bottom: 14px; padding: 4px 0; }
+    .emj-btn { font-size: 22px; background: #111; border: 1px solid var(--border); border-radius: 8px; padding: 5px 9px; cursor: pointer; transition: border-color .12s, background .12s; }
+    .emj-btn.active { background: rgba(255,61,0,.15); border-color: var(--accent); }
   </style>
 </head>
 <body>
 <div id="app">
   <header>
     <div class="logo">
-      <div class="logo-text"><span>GYM</span><span>TRACK</span></div>
-      <div class="logo-dot"></div>
+      <div class="logo-left">
+        <div class="logo-text"><span>GYM</span><span>TRACK</span></div>
+        <div class="logo-dot"></div>
+      </div>
+      <button class="settings-btn" onclick="openSettings()" title="Impostazioni">⚙️</button>
     </div>
     <nav class="tabs" id="tabs">
       <button class="tab active" data-tab="log">🏋️ Sessione</button>
@@ -218,16 +251,9 @@
         <div class="tpl-grid" id="tpl-picker"></div>
       </div>
       <div id="log-editor" style="display:none;">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
           <div id="log-editor-title" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:1px;text-transform:uppercase;"></div>
           <button class="btn-ghost" onclick="cancelLog()" style="padding:4px 12px;font-size:11px;">← Cambia</button>
-        </div>
-        <div class="ex-grid" style="margin-bottom:6px;">
-          <div class="col-hdr">Esercizio</div>
-          <div class="col-hdr" style="text-align:center;">Ser</div>
-          <div class="col-hdr" style="text-align:center;">Rip</div>
-          <div class="col-hdr" style="text-align:center;">Kg</div>
-          <div></div>
         </div>
         <div id="log-ex-list"></div>
         <button class="btn-ghost" onclick="addLogEx()" style="width:100%;margin-bottom:18px;">+ Aggiungi esercizio</button>
@@ -256,22 +282,13 @@
           <option value="">— seleziona —</option>
         </select>
       </div>
-      <div id="prog-best" style="display:none;margin-bottom:20px;">
+      <div id="prog-best" style="display:none;margin-bottom:20px;display:none;align-items:center;gap:8px;">
         <span style="font-size:18px;">🏆</span>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:.5px;margin-left:8px;">MASSIMO: <span id="prog-best-val" style="color:var(--accent);"></span></span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;">MASSIMO: <span id="prog-best-val" style="color:var(--accent);"></span></span>
       </div>
-      <div id="chart-peso" style="display:none;">
-        <div class="section-label">Progressione peso (kg)</div>
-        <div class="chart-wrap" id="svg-peso"></div>
-      </div>
-      <div id="chart-vol" style="display:none;margin-top:24px;">
-        <div class="section-label">Volume totale (serie × rip × kg)</div>
-        <div class="chart-wrap" id="svg-vol"></div>
-      </div>
-      <div id="prog-empty" class="empty" style="display:none;">
-        <div class="empty-icon">📈</div>
-        <div class="empty-txt">Registra sessioni per vedere i progressi</div>
-      </div>
+      <div id="chart-peso" style="display:none;"><div class="section-label">Progressione peso (kg)</div><div class="chart-wrap" id="svg-peso"></div></div>
+      <div id="chart-vol" style="display:none;margin-top:24px;"><div class="section-label">Volume (serie × rip × kg)</div><div class="chart-wrap" id="svg-vol"></div></div>
+      <div id="prog-empty" class="empty" style="display:none;"><div class="empty-icon">📈</div><div class="empty-txt">Registra sessioni per vedere i progressi</div></div>
     </section>
 
     <!-- TEMPLATES -->
@@ -281,17 +298,16 @@
         <button class="btn-primary" onclick="newTemplate()" style="padding:8px 18px;font-size:13px;">+ Nuova scheda</button>
       </div>
       <div id="tpl-list"></div>
-
-      <!-- Editor (hidden) -->
       <div id="tpl-editor" style="display:none;">
         <button class="btn-ghost" onclick="closeTplEditor()" style="margin-bottom:18px;font-size:11px;">← Indietro</button>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;" id="emoji-picker"></div>
+        <div class="emoji-scroll" id="emoji-picker"></div>
         <input id="tpl-name-input" class="field" placeholder="Nome scheda (es. PUSH A)" style="width:100%;margin-bottom:18px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-transform:uppercase;" />
-        <div class="ex-grid" style="margin-bottom:6px;">
+        <div class="tpl-ex-hdr">
           <div class="col-hdr">Esercizio</div>
           <div class="col-hdr" style="text-align:center;">Ser</div>
           <div class="col-hdr" style="text-align:center;">Rip</div>
           <div class="col-hdr" style="text-align:center;">Kg</div>
+          <div class="col-hdr" style="text-align:center;">Riposo</div>
           <div></div>
         </div>
         <div id="tpl-ex-list"></div>
@@ -302,6 +318,47 @@
       </div>
     </section>
   </main>
+</div>
+
+<!-- Settings panel -->
+<div id="settings-overlay" onclick="closeSettings()"></div>
+<div id="settings-panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:1px;">⚙️ IMPOSTAZIONI</div>
+    <button onclick="closeSettings()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px;">×</button>
+  </div>
+
+  <div class="section-label">Colore principale</div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px;" id="color-swatches"></div>
+
+  <div class="section-label">Colore sfondo</div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px;" id="bg-swatches"></div>
+
+  <div class="section-label" style="margin-bottom:10px;">Colore personalizzato</div>
+  <div style="display:flex;gap:10px;align-items:center;margin-bottom:28px;">
+    <input type="color" id="custom-color" value="#ff3d00" style="width:44px;height:44px;border:none;border-radius:8px;cursor:pointer;background:none;" />
+    <button class="btn-ghost" onclick="applyCustomColor()" style="font-size:12px;">Applica</button>
+  </div>
+
+  <button class="btn-ghost btn-danger" onclick="resetSettings()" style="width:100%;margin-top:8px;">Ripristina predefiniti</button>
+</div>
+
+<!-- Timer modal -->
+<div id="timer-modal">
+  <div class="timer-box">
+    <div class="timer-title" id="timer-ex-name">RIPOSO</div>
+    <div class="timer-circle">
+      <svg width="140" height="140" viewBox="0 0 100 100">
+        <circle class="timer-ring" cx="50" cy="50" r="45"/>
+        <circle class="timer-prog" id="timer-prog" cx="50" cy="50" r="45"/>
+      </svg>
+      <div class="timer-display" id="timer-display">0:00</div>
+    </div>
+    <div class="timer-controls">
+      <button class="btn-ghost" onclick="closeTimer()">Chiudi</button>
+      <button class="btn-primary" id="timer-toggle-btn" onclick="toggleTimer()">▶ Avvia</button>
+    </div>
+  </div>
 </div>
 
 <!-- Install banner -->
@@ -315,82 +372,186 @@
 </div>
 
 <script>
-// ── Storage (localStorage) ─────────────────────────────────────────────────
+// ── Storage ────────────────────────────────────────────────────────────────
 const LS = {
   get: k => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } },
   set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 
 // ── State ──────────────────────────────────────────────────────────────────
-let workouts = LS.get("gt_workouts") || [];
-let templates = LS.get("gt_templates") || [
-  { id: "t1", name: "PUSH A", emoji: "💪", exercises: [{ name: "Panca Piana", sets: 4, reps: 8, weight: "" }, { name: "Military Press", sets: 3, reps: 10, weight: "" }, { name: "Tricipiti Cavi", sets: 3, reps: 12, weight: "" }] },
-  { id: "t2", name: "PULL A", emoji: "🔙", exercises: [{ name: "Trazioni", sets: 4, reps: 8, weight: "" }, { name: "Rematore Bilanciere", sets: 3, reps: 10, weight: "" }, { name: "Curl Bilanciere", sets: 3, reps: 12, weight: "" }] },
-  { id: "t3", name: "LEGS A", emoji: "🦵", exercises: [{ name: "Squat", sets: 4, reps: 6, weight: "" }, { name: "Leg Press", sets: 3, reps: 10, weight: "" }, { name: "Romanian Deadlift", sets: 3, reps: 10, weight: "" }] }
-];
+let workouts  = LS.get("gt_workouts")  || [];
+let templates = LS.get("gt_templates") || [];
 
-let logExercises = [];
+let logExercises = [];  // { name, sets, reps, weight, restSecs, setData:[] }
 let logTpl = null;
 let editingTpl = null;
 let tplExercises = [];
 let deferredPrompt = null;
 
-const EMOJIS = ["💪","🔙","🦵","🏋️","🔥","⚡","🎯","💥","🩵","🏃"];
+// ── Settings colours ───────────────────────────────────────────────────────
+const ACCENT_PRESETS = ["#ff3d00","#00e5ff","#39ff14","#ff2d78","#ffd600","#7c4dff","#ff6d00","#00bfa5"];
+const BG_PRESETS     = ["#0d0d0d","#0a0f1e","#0f1a0f","#1a0a1a","#1a1000","#ffffff"];
+
+let currentAccent = LS.get("gt_accent") || "#ff3d00";
+let currentBg     = LS.get("gt_bg")     || "#0d0d0d";
+
+function applyTheme() {
+  document.documentElement.style.setProperty("--accent", currentAccent);
+  document.documentElement.style.setProperty("--bg", currentBg);
+  const isDark = currentBg === "#ffffff";
+  document.documentElement.style.setProperty("--text", isDark ? "#111" : "#f5f5f5");
+  document.documentElement.style.setProperty("--card", isDark ? "#f0f0f0" : "#111");
+  document.documentElement.style.setProperty("--border", isDark ? "#ddd" : "#1f1f1f");
+  document.documentElement.style.setProperty("--muted", isDark ? "#888" : "#555");
+  document.body.style.background = currentBg;
+}
+
+function renderSwatches() {
+  document.getElementById("color-swatches").innerHTML = ACCENT_PRESETS.map(c => `
+    <div class="color-swatch ${c===currentAccent?'active':''}" style="background:${c};" onclick="setAccent('${c}')"></div>`).join("");
+  document.getElementById("bg-swatches").innerHTML = BG_PRESETS.map(c => `
+    <div class="color-swatch ${c===currentBg?'active':''}" style="background:${c};border:1px solid #333;" onclick="setBg('${c}')"></div>`).join("");
+  document.getElementById("custom-color").value = currentAccent;
+}
+
+function setAccent(c) { currentAccent = c; LS.set("gt_accent", c); applyTheme(); renderSwatches(); }
+function setBg(c)     { currentBg = c;     LS.set("gt_bg", c);     applyTheme(); renderSwatches(); }
+function applyCustomColor() { setAccent(document.getElementById("custom-color").value); }
+function resetSettings() { setAccent("#ff3d00"); setBg("#0d0d0d"); }
+
+function openSettings()  { document.getElementById("settings-panel").classList.add("open"); document.getElementById("settings-overlay").classList.add("open"); renderSwatches(); }
+function closeSettings() { document.getElementById("settings-panel").classList.remove("open"); document.getElementById("settings-overlay").classList.remove("open"); }
+
+// ── Timer ──────────────────────────────────────────────────────────────────
+let timerTotal = 0, timerLeft = 0, timerRunning = false, timerInterval = null;
+
+function openTimer(secs, exName) {
+  timerTotal = secs; timerLeft = secs; timerRunning = false;
+  clearInterval(timerInterval);
+  document.getElementById("timer-ex-name").textContent = (exName || "RIPOSO").toUpperCase();
+  document.getElementById("timer-toggle-btn").textContent = "▶ Avvia";
+  updateTimerDisplay();
+  document.getElementById("timer-modal").classList.add("open");
+}
+function closeTimer() {
+  clearInterval(timerInterval); timerRunning = false;
+  document.getElementById("timer-modal").classList.remove("open");
+}
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval); timerRunning = false;
+    document.getElementById("timer-toggle-btn").textContent = "▶ Riprendi";
+  } else {
+    if (timerLeft <= 0) { timerLeft = timerTotal; }
+    timerRunning = true;
+    document.getElementById("timer-toggle-btn").textContent = "⏸ Pausa";
+    timerInterval = setInterval(() => {
+      timerLeft--;
+      updateTimerDisplay();
+      if (timerLeft <= 0) { clearInterval(timerInterval); timerRunning = false; document.getElementById("timer-toggle-btn").textContent = "✓ Finito"; }
+    }, 1000);
+  }
+}
+function updateTimerDisplay() {
+  const m = Math.floor(timerLeft / 60), s = timerLeft % 60;
+  document.getElementById("timer-display").textContent = `${m}:${String(s).padStart(2,"0")}`;
+  const pct = timerTotal > 0 ? timerLeft / timerTotal : 1;
+  const offset = 283 - 283 * pct;
+  const prog = document.getElementById("timer-prog");
+  prog.style.strokeDashoffset = offset;
+  prog.style.stroke = timerLeft <= 10 ? "#ff2d78" : currentAccent;
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-const fmt = iso => new Date(iso).toLocaleDateString("it-IT", { day:"2-digit", month:"short" });
-const fmtFull = iso => new Date(iso).toLocaleDateString("it-IT", { weekday:"long", day:"numeric", month:"long" });
+const fmt = iso => new Date(iso).toLocaleDateString("it-IT",{day:"2-digit",month:"short"});
+const fmtFull = iso => new Date(iso).toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"});
 const save = () => { LS.set("gt_workouts", workouts); LS.set("gt_templates", templates); };
+
+// Rest time options: every 30s from 0:30 to 10:00
+const REST_OPTIONS = (() => {
+  const opts = [{ val: 0, label: "—" }];
+  for (let s = 30; s <= 600; s += 30) {
+    const m = Math.floor(s/60), sec = s%60;
+    opts.push({ val: s, label: `${m}:${String(sec).padStart(2,"0")}` });
+  }
+  return opts;
+})();
+
+function restSelect(currentVal, idx, isLog) {
+  const fn = isLog ? `logExercises[${idx}].restSecs` : `tplExercises[${idx}].restSecs`;
+  return `<select class="field" style="font-size:12px;padding:8px 4px;text-align:center;" onchange="${fn}=+this.value">
+    ${REST_OPTIONS.map(o => `<option value="${o.val}" ${o.val===(currentVal||0)?'selected':''}>${o.label}</option>`).join("")}
+  </select>`;
+}
+
+// All emoji (broad set)
+const ALL_EMOJIS = [
+  "💪","🔙","🦵","🏋️","🔥","⚡","🎯","💥","🏃","🧗","🤸","🚴","🏊","⛹️","🤼","🥊","🏆",
+  "🥇","🎽","👟","💦","🧘","🧖","🦾","🦿","❤️‍🔥","💢","🌪️","🌊","🌙","⭐","🎮","🎲","🃏",
+  "🐉","🦁","🐺","🦅","🦊","🐻","🦋","🌈","🍎","🍌","🥑","🥗","🧃","💊","🩺",
+  "🇮🇹","🇺🇸","🇬🇧","🇩🇪","🇫🇷","🇪🇸","🇵🇹","🇧🇷","🇦🇷","🇲🇽","🇯🇵","🇰🇷","🇨🇳","🇷🇺","🇺🇦",
+  "🇳🇱","🇧🇪","🇨🇭","🇦🇹","🇸🇪","🇳🇴","🇩🇰","🇫🇮","🇵🇱","🇨🇿","🇭🇺","🇷🇴","🇬🇷","🇹🇷","🇸🇦",
+  "🇦🇺","🇳🇿","🇨🇦","🇮🇳","🇿🇦","🇳🇬","🇪🇬","🇮🇱","🇮🇷","🇵🇰","🇦🇪","🇸🇬","🇹🇭","🇻🇳","🇮🇩"
+];
 
 // ── Tab routing ────────────────────────────────────────────────────────────
 document.getElementById("tabs").addEventListener("click", e => {
-  const btn = e.target.closest(".tab");
-  if (!btn) return;
+  const btn = e.target.closest(".tab"); if (!btn) return;
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
   btn.classList.add("active");
   const sec = document.getElementById("tab-" + btn.dataset.tab);
   sec.classList.add("active");
-  sec.classList.remove("fade-up");
-  void sec.offsetWidth;
-  sec.classList.add("fade-up");
-
-  if (btn.dataset.tab === "history") renderHistory();
-  if (btn.dataset.tab === "progress") renderProgress();
+  sec.classList.remove("fade-up"); void sec.offsetWidth; sec.classList.add("fade-up");
+  if (btn.dataset.tab === "history")   renderHistory();
+  if (btn.dataset.tab === "progress")  renderProgress();
   if (btn.dataset.tab === "templates") renderTemplates();
 });
 
 // ── Init ───────────────────────────────────────────────────────────────────
 function init() {
+  applyTheme();
   document.getElementById("today-date").textContent = fmtFull(new Date().toISOString());
   renderTplPicker();
 }
 
-// ── Template picker (log) ──────────────────────────────────────────────────
+// ── Template picker ────────────────────────────────────────────────────────
 function renderTplPicker() {
   const el = document.getElementById("tpl-picker");
+  if (!templates.length) {
+    el.innerHTML = `<div class="empty" style="padding:30px 0;grid-column:1/-1;">
+      <div class="empty-icon">📂</div>
+      <div class="empty-txt">Nessuna scheda — creane una!</div>
+    </div>`;
+    el.innerHTML += `<button class="tpl-card free" onclick="selectFree()"><div style="font-size:26px;margin-bottom:8px;">✏️</div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;text-transform:uppercase;">Libero</div></button>`;
+    return;
+  }
   el.innerHTML = templates.map(t => `
     <button class="tpl-card" onclick="selectTpl('${t.id}')">
       <div style="font-size:26px;margin-bottom:8px;">${t.emoji||"🏋️"}</div>
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;letter-spacing:1px;text-transform:uppercase;">${t.name}</div>
       <div style="color:var(--muted);font-size:12px;margin-top:4px;">${t.exercises.length} esercizi</div>
-    </button>
-  `).join("") + `
-    <button class="tpl-card free" onclick="selectFree()">
-      <div style="font-size:26px;margin-bottom:8px;">✏️</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;letter-spacing:1px;text-transform:uppercase;">Libero</div>
-    </button>`;
+    </button>`).join("") +
+  `<button class="tpl-card free" onclick="selectFree()">
+    <div style="font-size:26px;margin-bottom:8px;">✏️</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;text-transform:uppercase;">Libero</div>
+  </button>`;
 }
 
 function selectTpl(id) {
   const t = templates.find(t => t.id === id);
   logTpl = t;
-  logExercises = t.exercises.map(e => ({ ...e }));
+  // Copy exercises but clear setData (no pre-filled reps shown)
+  logExercises = t.exercises.map(e => ({
+    name: e.name, sets: e.sets, reps: "", weight: e.weight||"",
+    restSecs: e.restSecs||0,
+    setData: Array.from({length: e.sets}, () => ({ reps: "", weight: e.weight||"" }))
+  }));
   showLogEditor(t.name);
 }
 function selectFree() {
   logTpl = { name: "LIBERO" };
-  logExercises = [{ name: "", sets: 3, reps: 10, weight: "" }];
+  logExercises = [{ name:"", sets:3, reps:"", weight:"", restSecs:0, setData: Array.from({length:3},()=>({reps:"",weight:""})) }];
   showLogEditor("LIBERO");
 }
 function cancelLog() {
@@ -407,17 +568,53 @@ function showLogEditor(name) {
 }
 
 function renderLogExList() {
-  document.getElementById("log-ex-list").innerHTML = logExercises.map((ex, i) => `
-    <div class="ex-grid slide-in">
-      <input class="field" value="${ex.name||""}" oninput="logExercises[${i}].name=this.value" placeholder="Esercizio" />
-      <input class="field" type="number" min="1" value="${ex.sets||3}" oninput="logExercises[${i}].sets=+this.value" style="text-align:center;" />
-      <input class="field" type="number" min="1" value="${ex.reps||10}" oninput="logExercises[${i}].reps=+this.value" style="text-align:center;" />
-      <input class="field" type="number" min="0" step="0.5" value="${ex.weight||""}" oninput="logExercises[${i}].weight=this.value?+this.value:undefined" placeholder="kg" style="text-align:center;" />
-      <button onclick="removeLogEx(${i})" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:20px;">×</button>
-    </div>`).join("");
+  document.getElementById("log-ex-list").innerHTML = logExercises.map((ex, i) => {
+    const sets = ex.setData || Array.from({length: ex.sets||3}, ()=>({reps:"",weight:""}));
+    const timerBtn = ex.restSecs > 0
+      ? `<span class="timer-badge" onclick="openTimer(${ex.restSecs},'${ex.name.replace(/'/g,"\\'")}')">⏱ ${Math.floor(ex.restSecs/60)}:${String(ex.restSecs%60).padStart(2,"0")}</span>`
+      : "";
+    return `<div class="log-ex-block slide-in" id="logex-${i}">
+      <div class="log-ex-name">
+        <span>${ex.name || "Esercizio"}</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          ${timerBtn}
+          <button onclick="removeLogEx(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;">×</button>
+        </div>
+      </div>
+      <div class="sets-grid">
+        ${sets.map((sd, si) => `
+          <div class="set-box">
+            <div class="set-label">Serie ${si+1}</div>
+            <input class="set-input" type="text" inputmode="text" placeholder="rip" value="${sd.reps||""}"
+              oninput="logExercises[${i}].setData[${si}].reps=this.value" />
+            <input class="set-input field" type="number" min="0" step="0.5" placeholder="kg" value="${sd.weight||""}"
+              oninput="logExercises[${i}].setData[${si}].weight=this.value?+this.value:''"
+              style="margin-top:4px;font-size:13px;border-top:1px solid var(--border);border-radius:0 0 4px 4px;" />
+          </div>`).join("")}
+      </div>
+    </div>`;
+  }).join("");
 }
-function addLogEx() { logExercises.push({ name:"", sets:3, reps:10, weight:"" }); renderLogExList(); }
+
+function addLogEx() {
+  logExercises.push({ name:"", sets:3, reps:"", weight:"", restSecs:0, setData: Array.from({length:3},()=>({reps:"",weight:""})) });
+  renderLogExList();
+  // Focus the name input of the new exercise
+  const blocks = document.querySelectorAll(".log-ex-block");
+  const last = blocks[blocks.length-1];
+  if (last) { const inp = last.querySelector("input"); if (inp) inp.focus(); }
+}
 function removeLogEx(i) { logExercises.splice(i,1); renderLogExList(); }
+
+// Update sets count when user changes sets field in log (free mode)
+function updateLogSets(i, val) {
+  const n = Math.max(1, +val||1);
+  logExercises[i].sets = n;
+  const cur = logExercises[i].setData || [];
+  while (cur.length < n) cur.push({reps:"",weight:""});
+  logExercises[i].setData = cur.slice(0, n);
+  renderLogExList();
+}
 
 function saveSession() {
   const valid = logExercises.filter(e => (e.name||"").trim());
@@ -426,7 +623,14 @@ function saveSession() {
     id: Date.now().toString(),
     date: new Date().toISOString(),
     templateName: logTpl?.name || "LIBERO",
-    exercises: valid,
+    exercises: valid.map(e => ({
+      name: e.name,
+      sets: e.sets,
+      reps: e.reps,
+      weight: e.weight,
+      restSecs: e.restSecs||0,
+      setData: e.setData
+    })),
     note: document.getElementById("log-note").value
   });
   save();
@@ -450,106 +654,85 @@ function renderHistory() {
       </div>
       ${openHist===w.id ? `
       <div class="hist-body">
-        ${w.exercises.map(ex => `
-          <div class="hist-row">
+        ${w.exercises.map(ex => {
+          const setInfo = ex.setData ? ex.setData.map((sd,i)=>`<span class="pill" style="margin:2px;">S${i+1}: ${sd.reps||"—"} rip${sd.weight?` @ ${sd.weight}kg`:""}</span>`).join("") : `<span class="pill">${ex.sets}×${ex.reps||"—"}</span>`;
+          return `<div class="hist-row" style="flex-wrap:wrap;gap:6px;">
             <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;">${ex.name}</span>
-            <div style="display:flex;gap:8px;">
-              <span class="pill">${ex.sets}×${ex.reps}</span>
-              ${ex.weight ? `<span class="pill pill-accent">${ex.weight} kg</span>` : ""}
-            </div>
-          </div>`).join("")}
+            <div style="display:flex;flex-wrap:wrap;gap:4px;">${setInfo}${ex.restSecs?`<span class="pill pill-accent">⏱ ${Math.floor(ex.restSecs/60)}:${String(ex.restSecs%60).padStart(2,"0")}</span>`:""}</div>
+          </div>`;
+        }).join("")}
         ${w.note ? `<div style="margin-top:10px;color:var(--muted);font-size:13px;font-style:italic;">📝 ${w.note}</div>` : ""}
         <button class="btn-ghost btn-danger" onclick="deleteWorkout('${w.id}')" style="margin-top:14px;font-size:11px;">Elimina sessione</button>
       </div>` : ""}
     </div>`).join("");
 }
-function toggleHist(id) { openHist = openHist === id ? null : id; renderHistory(); }
-function deleteWorkout(id) { workouts = workouts.filter(w => w.id !== id); save(); openHist=null; renderHistory(); }
+function toggleHist(id) { openHist = openHist===id?null:id; renderHistory(); }
+function deleteWorkout(id) { workouts=workouts.filter(w=>w.id!==id); save(); openHist=null; renderHistory(); }
 
 // ── Progress ───────────────────────────────────────────────────────────────
 function renderProgress() {
   const total = workouts.length;
-  const week = workouts.filter(w => (Date.now()-new Date(w.date))/86400000 <= 7).length;
-  const vol = Math.round(workouts.reduce((s,w) => s + w.exercises.reduce((ss,e) => ss+(e.sets||0)*(e.reps||0)*(e.weight||0),0),0));
+  const week  = workouts.filter(w=>(Date.now()-new Date(w.date))/86400000<=7).length;
+  const vol   = Math.round(workouts.reduce((s,w)=>s+w.exercises.reduce((ss,e)=>ss+(e.sets||0)*(+(e.reps||0))*(+(e.weight||0)),0),0));
   document.getElementById("stat-total").textContent = total;
-  document.getElementById("stat-week").textContent = week;
-  document.getElementById("stat-vol").textContent = vol.toLocaleString("it");
-
-  const allEx = [...new Set(workouts.flatMap(w => w.exercises.map(e => e.name)))].filter(Boolean).sort();
+  document.getElementById("stat-week").textContent  = week;
+  document.getElementById("stat-vol").textContent   = vol.toLocaleString("it");
+  const allEx = [...new Set(workouts.flatMap(w=>w.exercises.map(e=>e.name)))].filter(Boolean).sort();
   const sel = document.getElementById("prog-select");
   const cur = sel.value;
-  sel.innerHTML = `<option value="">— seleziona —</option>` + allEx.map(e => `<option value="${e}" ${e===cur?"selected":""}>${e}</option>`).join("");
-
-  if (!total) { document.getElementById("prog-empty").style.display=""; } else { document.getElementById("prog-empty").style.display="none"; }
+  sel.innerHTML = `<option value="">— seleziona —</option>` + allEx.map(e=>`<option value="${e}" ${e===cur?"selected":""}>${e}</option>`).join("");
+  document.getElementById("prog-empty").style.display = total?"none":"";
   renderCharts();
 }
-
 function renderCharts() {
   const sel = document.getElementById("prog-select").value;
-  document.getElementById("chart-peso").style.display = "none";
-  document.getElementById("chart-vol").style.display = "none";
-  document.getElementById("prog-best").style.display = "none";
+  document.getElementById("chart-peso").style.display="none";
+  document.getElementById("chart-vol").style.display="none";
+  document.getElementById("prog-best").style.display="none";
   if (!sel) return;
-
-  const pts = workouts
-    .filter(w => w.exercises.some(e => e.name === sel))
-    .map(w => { const ex = w.exercises.find(e => e.name===sel); return { date: fmt(w.date), peso: ex?.weight||0, vol: (ex?.sets||0)*(ex?.reps||0)*(ex?.weight||0) }; });
-
-  if (!pts.length) return;
-
-  const best = Math.max(...pts.map(p => p.peso));
-  if (best > 0) { document.getElementById("prog-best").style.display="inline-flex"; document.getElementById("prog-best-val").textContent = best + " kg"; }
-
-  document.getElementById("chart-peso").style.display="";
-  document.getElementById("svg-peso").innerHTML = makeSVGChart(pts.map(p=>({x:p.date,y:p.peso})), "#ff3d00");
-  document.getElementById("chart-vol").style.display="";
-  document.getElementById("svg-vol").innerHTML = makeSVGChart(pts.map(p=>({x:p.date,y:p.vol})), "#00e5ff");
-}
-
-function makeSVGChart(data, color) {
-  const W = 320, H = 140, PL = 38, PR = 10, PT = 10, PB = 28;
-  const iW = W - PL - PR, iH = H - PT - PB;
-  const ys = data.map(d => d.y);
-  const minY = Math.min(...ys), maxY = Math.max(...ys);
-  const rangeY = maxY - minY || 1;
-  const n = data.length;
-
-  const cx = i => PL + (i / Math.max(n-1,1)) * iW;
-  const cy = y => PT + iH - ((y - minY) / rangeY) * iH;
-
-  const pts = data.map((d,i) => `${cx(i)},${cy(d.y)}`).join(" ");
-  const area = `${PL},${PT+iH} ` + data.map((d,i) => `${cx(i)},${cy(d.y)}`).join(" ") + ` ${cx(n-1)},${PT+iH}`;
-
-  const gid = "g" + Math.random().toString(36).slice(2);
-  let ticks = "";
-  data.forEach((d,i) => {
-    if (n <= 6 || i % Math.ceil(n/5) === 0)
-      ticks += `<text x="${cx(i)}" y="${H-6}" text-anchor="middle" fill="#444" font-size="9" font-family="'Barlow Condensed',sans-serif">${d.x}</text>`;
+  const pts = workouts.filter(w=>w.exercises.some(e=>e.name===sel)).map(w=>{
+    const ex=w.exercises.find(e=>e.name===sel);
+    const w_ = +(ex?.weight||0);
+    const r_ = +(ex?.reps||0);
+    return { date:fmt(w.date), peso:w_, vol:(ex?.sets||0)*r_*w_ };
   });
-  const yLabels = [minY, minY+rangeY/2, maxY].map(v =>
-    `<text x="${PL-4}" y="${cy(v)+4}" text-anchor="end" fill="#444" font-size="9" font-family="'Barlow Condensed',sans-serif">${Math.round(v)}</text>`
-  ).join("");
-
+  if (!pts.length) return;
+  const best=Math.max(...pts.map(p=>p.peso));
+  if (best>0) { document.getElementById("prog-best").style.display="flex"; document.getElementById("prog-best-val").textContent=best+" kg"; }
+  document.getElementById("chart-peso").style.display="";
+  document.getElementById("svg-peso").innerHTML=makeSVGChart(pts.map(p=>({x:p.date,y:p.peso})),currentAccent);
+  document.getElementById("chart-vol").style.display="";
+  document.getElementById("svg-vol").innerHTML=makeSVGChart(pts.map(p=>({x:p.date,y:p.vol})),"#00e5ff");
+}
+function makeSVGChart(data,color) {
+  const W=320,H=140,PL=38,PR=10,PT=10,PB=28,iW=W-PL-PR,iH=H-PT-PB;
+  const ys=data.map(d=>d.y),minY=Math.min(...ys),maxY=Math.max(...ys),rangeY=maxY-minY||1,n=data.length;
+  const cx=i=>PL+(i/Math.max(n-1,1))*iW, cy=y=>PT+iH-((y-minY)/rangeY)*iH;
+  const pts=data.map((d,i)=>`${cx(i)},${cy(d.y)}`).join(" ");
+  const area=`${PL},${PT+iH} `+data.map((d,i)=>`${cx(i)},${cy(d.y)}`).join(" ")+` ${cx(n-1)},${PT+iH}`;
+  const gid="g"+Math.random().toString(36).slice(2);
+  let ticks="";
+  data.forEach((d,i)=>{ if(n<=6||i%Math.ceil(n/5)===0) ticks+=`<text x="${cx(i)}" y="${H-6}" text-anchor="middle" fill="#444" font-size="9" font-family="'Barlow Condensed',sans-serif">${d.x}</text>`; });
+  const yLabels=[minY,minY+rangeY/2,maxY].map(v=>`<text x="${PL-4}" y="${cy(v)+4}" text-anchor="end" fill="#444" font-size="9" font-family="'Barlow Condensed',sans-serif">${Math.round(v)}</text>`).join("");
   return `<svg viewBox="0 0 ${W} ${H}" class="svg-chart" style="max-height:160px;">
-    <defs>
-      <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${color}" stop-opacity=".3"/>
-        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${color}" stop-opacity=".3"/>
+      <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+    </linearGradient></defs>
     <polygon points="${area}" fill="url(#${gid})"/>
     <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
-    ${data.map((d,i) => `<circle cx="${cx(i)}" cy="${cy(d.y)}" r="3.5" fill="${color}"/>`).join("")}
-    ${yLabels}${ticks}
-  </svg>`;
+    ${data.map((d,i)=>`<circle cx="${cx(i)}" cy="${cy(d.y)}" r="3.5" fill="${color}"/>`).join("")}
+    ${yLabels}${ticks}</svg>`;
 }
 
 // ── Templates ──────────────────────────────────────────────────────────────
 function renderTemplates() {
-  document.getElementById("tpl-count").textContent = templates.length + " schede salvate";
-  document.getElementById("tpl-list").style.display = "";
-  document.getElementById("tpl-editor").style.display = "none";
-  document.getElementById("tpl-list").innerHTML = templates.map(t => `
+  document.getElementById("tpl-count").textContent = templates.length+" schede salvate";
+  document.getElementById("tpl-list").style.display="";
+  document.getElementById("tpl-editor").style.display="none";
+  document.getElementById("tpl-list").innerHTML = !templates.length
+    ? `<div class="empty"><div class="empty-icon">📂</div><div class="empty-txt">Nessuna scheda creata</div></div>`
+    : templates.map(t=>`
     <div class="card" style="padding:16px 18px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
       <div style="display:flex;gap:14px;align-items:flex-start;min-width:0;">
         <div style="font-size:30px;flex-shrink:0;">${t.emoji||"🏋️"}</div>
@@ -566,80 +749,73 @@ function renderTemplates() {
 }
 
 function newTemplate() {
-  editingTpl = { id: Date.now().toString(), name:"", emoji:"🏋️", exercises:[{ name:"", sets:3, reps:10, weight:"" }] };
-  tplExercises = [...editingTpl.exercises];
-  openTplEditor(true);
+  editingTpl = { id: Date.now().toString(), name:"", emoji:"🏋️", exercises:[{ name:"", sets:3, reps:"", weight:"", restSecs:0 }] };
+  tplExercises = editingTpl.exercises.map(e=>({...e}));
+  openTplEditor();
 }
 function editTpl(id) {
   editingTpl = { ...templates.find(t=>t.id===id) };
   tplExercises = editingTpl.exercises.map(e=>({...e}));
-  openTplEditor(false);
+  openTplEditor();
 }
-function openTplEditor(isNew) {
-  document.getElementById("tpl-list").style.display = "none";
-  document.getElementById("tpl-editor").style.display = "";
+function openTplEditor() {
+  document.getElementById("tpl-list").style.display="none";
+  document.getElementById("tpl-editor").style.display="";
   document.getElementById("tpl-name-input").value = editingTpl.name;
-  document.getElementById("emoji-picker").innerHTML = EMOJIS.map(em => `
-    <button onclick="setTplEmoji('${em}')" style="font-size:22px;background:${editingTpl.emoji===em?'rgba(255,61,0,.15)':'#111'};border:1px solid ${editingTpl.emoji===em?'var(--accent)':'var(--border)'};border-radius:8px;padding:6px 10px;cursor:pointer;" id="emj-${em}">${em}</button>`).join("");
+  renderEmojiPicker();
   renderTplExList();
 }
 function closeTplEditor() { renderTemplates(); }
+
+function renderEmojiPicker() {
+  document.getElementById("emoji-picker").innerHTML = ALL_EMOJIS.map(em=>`
+    <button class="emj-btn ${editingTpl.emoji===em?'active':''}" onclick="setTplEmoji('${em}')">${em}</button>`).join("");
+}
 function setTplEmoji(em) {
   editingTpl.emoji = em;
-  document.querySelectorAll("[id^='emj-']").forEach(b => {
-    const isActive = b.id === "emj-"+em;
-    b.style.background = isActive ? "rgba(255,61,0,.15)" : "#111";
-    b.style.borderColor = isActive ? "var(--accent)" : "var(--border)";
+  document.querySelectorAll(".emj-btn").forEach(b => {
+    b.classList.toggle("active", b.textContent===em);
   });
 }
+
 function renderTplExList() {
-  document.getElementById("tpl-ex-list").innerHTML = tplExercises.map((ex,i) => `
-    <div class="ex-grid slide-in">
+  document.getElementById("tpl-ex-list").innerHTML = tplExercises.map((ex,i)=>`
+    <div class="tpl-ex-row slide-in">
       <input class="field" value="${ex.name||""}" oninput="tplExercises[${i}].name=this.value" placeholder="Esercizio" />
       <input class="field" type="number" min="1" value="${ex.sets||3}" oninput="tplExercises[${i}].sets=+this.value" style="text-align:center;" />
-      <input class="field" type="number" min="1" value="${ex.reps||10}" oninput="tplExercises[${i}].reps=+this.value" style="text-align:center;" />
-      <input class="field" type="number" min="0" step="0.5" value="${ex.weight||""}" oninput="tplExercises[${i}].weight=this.value?+this.value:undefined" placeholder="kg" style="text-align:center;" />
+      <input class="field" type="text" inputmode="text" value="${ex.reps||""}" oninput="tplExercises[${i}].reps=this.value" placeholder="es. 8/6/4" style="text-align:center;" />
+      <input class="field" type="number" min="0" step="0.5" value="${ex.weight||""}" oninput="tplExercises[${i}].weight=this.value?+this.value:''" placeholder="kg" style="text-align:center;" />
+      ${restSelect(ex.restSecs, i, false)}
       <button onclick="removeTplEx(${i})" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:20px;">×</button>
     </div>`).join("");
 }
-function addTplEx() { tplExercises.push({ name:"", sets:3, reps:10, weight:"" }); renderTplExList(); }
+function addTplEx() { tplExercises.push({name:"",sets:3,reps:"",weight:"",restSecs:0}); renderTplExList(); }
 function removeTplEx(i) { tplExercises.splice(i,1); renderTplExList(); }
 function saveTpl() {
   const name = document.getElementById("tpl-name-input").value.trim().toUpperCase();
   if (!name) return;
   editingTpl.name = name;
   editingTpl.exercises = tplExercises;
-  const idx = templates.findIndex(t => t.id === editingTpl.id);
-  if (idx >= 0) templates[idx] = editingTpl; else templates.push(editingTpl);
-  save();
-  renderTplPicker();
-  renderTemplates();
+  const idx = templates.findIndex(t=>t.id===editingTpl.id);
+  if (idx>=0) templates[idx]=editingTpl; else templates.push(editingTpl);
+  save(); renderTplPicker(); renderTemplates();
 }
-function deleteTpl(id) { templates = templates.filter(t=>t.id!==id); save(); renderTemplates(); renderTplPicker(); }
+function deleteTpl(id) { templates=templates.filter(t=>t.id!==id); save(); renderTemplates(); renderTplPicker(); }
 
 // ── PWA Install ────────────────────────────────────────────────────────────
 window.addEventListener("beforeinstallprompt", e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  if (!localStorage.getItem("gt_install_dismissed")) {
-    document.getElementById("install-banner").classList.add("show");
-  }
+  e.preventDefault(); deferredPrompt = e;
+  if (!localStorage.getItem("gt_install_dismissed")) document.getElementById("install-banner").classList.add("show");
 });
 function installApp() {
   if (!deferredPrompt) return;
   deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(() => { deferredPrompt = null; dismissInstall(); });
+  deferredPrompt.userChoice.then(()=>{ deferredPrompt=null; dismissInstall(); });
 }
-function dismissInstall() {
-  localStorage.setItem("gt_install_dismissed","1");
-  document.getElementById("install-banner").classList.remove("show");
-}
-window.addEventListener("appinstalled", () => dismissInstall());
+function dismissInstall() { localStorage.setItem("gt_install_dismissed","1"); document.getElementById("install-banner").classList.remove("show"); }
+window.addEventListener("appinstalled", ()=>dismissInstall());
 
-// ── Service Worker ─────────────────────────────────────────────────────────
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js").catch(() => {});
-}
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 
 init();
 </script>
