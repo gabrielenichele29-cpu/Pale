@@ -429,12 +429,15 @@ const SUPA_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
 const { createClient } = supabase;
 const sb = createClient(SUPA_URL, SUPA_KEY, {
   auth: {
-    flowType: "implicit",
+    flowType: "pkce",
     detectSessionInUrl: true,
     persistSession: true,
     autoRefreshToken: true,
-    storage: localStorage,
-    storageKey: "gt_session",
+    storage: {
+      getItem: (key) => { try { return sessionStorage.getItem(key) || localStorage.getItem(key); } catch { return null; } },
+      setItem: (key, value) => { try { sessionStorage.setItem(key, value); localStorage.setItem(key, value); } catch {} },
+      removeItem: (key) => { try { sessionStorage.removeItem(key); localStorage.removeItem(key); } catch {} }
+    }
   }
 });
 
@@ -485,10 +488,21 @@ function closeSettings() { document.getElementById("settings-panel").classList.r
 
 // ── Auth ────────────────────────────────────────────────────────────────────
 async function loginWithGoogle() {
-  await sb.auth.signInWithOAuth({
+  // Build the OAuth URL manually forcing implicit flow (response_type=token)
+  // This bypasses Supabase's PKCE which breaks on Safari iOS with GitHub Pages
+  const params = new URLSearchParams({
+    client_id: "659989600291-nooh9gke4ueijr140nqukosakouou3p.apps.googleusercontent.com",
+    redirect_uri: "https://idcneuhbhxpohtnrsboz.supabase.co/auth/v1/callback",
+    response_type: "token",
+    scope: "email profile",
+    include_granted_scopes: "true",
+  });
+  // Let Supabase handle it normally but override flow
+  const { data, error } = await sb.auth.signInWithOAuth({
     provider: "google",
     options: {
       redirectTo: "https://gabrielenichele29-cpu.github.io/GymTrack/",
+      scopes: "email profile",
     }
   });
 }
@@ -717,32 +731,42 @@ async function boot() {
   applyTheme();
   showLoading();
 
-  // If URL has access_token in hash, Supabase will pick it up via detectSessionInUrl
-  // We just need to wait a moment for it to process
-  const hasToken = window.location.hash && window.location.hash.includes("access_token");
-
-  if (hasToken) {
-    // Give Supabase time to process the token from URL
-    await new Promise(r => setTimeout(r, 1500));
-    // Clean URL
+  // STEP 1: handle hash token from OAuth redirect
+  const hash = window.location.hash;
+  if (hash && hash.includes("access_token")) {
+    try {
+      const params = new URLSearchParams(hash.replace("#", ""));
+      const access_token  = params.get("access_token");
+      const refresh_token = params.get("refresh_token") || "";
+      if (access_token) {
+        const { data, error } = await sb.auth.setSession({ access_token, refresh_token });
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+        if (data?.session?.user) {
+          await enterApp(data.session.user);
+          return;
+        }
+      }
+    } catch(e) { console.warn("token parse error", e); }
     history.replaceState(null, "", window.location.pathname);
   }
 
-  const { data: { session }, error } = await sb.auth.getSession();
+  // STEP 2: check stored session
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user) {
+      await enterApp(session.user);
+      return;
+    }
+  } catch(e) { console.warn("getSession error", e); }
 
-  if (session?.user) {
-    await enterApp(session.user);
-  } else {
-    showLogin();
-  }
+  showLogin();
 
-  // Handle future sign in/out
+  // STEP 3: listen for future events
   sb.auth.onAuthStateChange(async (event, session) => {
     if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session?.user && !currentUser) {
       await enterApp(session.user);
     } else if (event === "SIGNED_OUT") {
-      currentUser = null;
-      workouts = []; templates = [];
+      currentUser = null; workouts = []; templates = [];
       showLogin();
     }
   });
