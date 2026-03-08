@@ -238,9 +238,12 @@
     .emj-btn { font-size: 22px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 5px 9px; cursor: pointer; transition: border-color .12s, background .12s; }
     .emj-btn.active { background: rgba(255,61,0,.15); border-color: var(--accent); }
 
-    /* Nav overlay */
-    #nav-overlay { display:none; position:fixed; inset:0; z-index:199; }
+    /* Nav overlay — stays BEHIND the dropdown */
+    #nav-overlay { display:none; position:fixed; inset:0; z-index:150; }
     #nav-overlay.open { display:block; }
+    /* Dropdown above everything, fully tappable on iOS */
+    #nav-dropdown { z-index:500 !important; pointer-events:auto; }
+    .nav-item { pointer-events:auto; -webkit-tap-highlight-color:rgba(255,61,0,.2); touch-action:manipulation; }
   </style>
 </head>
 <body>
@@ -461,19 +464,19 @@ function closeNav() {
   document.getElementById("logo-arrow").classList.remove("open");
 }
 function goTo(tab) {
-  closeNav();
-  // Update active nav item
-  document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.tab===tab));
-  // Update section label
-  document.getElementById("current-section-lbl").textContent = NAV_LABELS[tab] || "";
-  // Switch sections
-  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
-  const sec = document.getElementById("tab-"+tab);
-  sec.classList.add("active");
-  sec.classList.remove("fade-up"); void sec.offsetWidth; sec.classList.add("fade-up");
-  if (tab==="history")   renderHistory();
-  if (tab==="progress")  renderProgress();
-  if (tab==="templates") renderTemplates();
+  // Small delay so iOS registers the tap before DOM changes
+  setTimeout(() => {
+    closeNav();
+    document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.tab===tab));
+    document.getElementById("current-section-lbl").textContent = NAV_LABELS[tab] || "";
+    document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+    const sec = document.getElementById("tab-"+tab);
+    sec.classList.add("active");
+    sec.classList.remove("fade-up"); void sec.offsetWidth; sec.classList.add("fade-up");
+    if (tab==="history")   renderHistory();
+    if (tab==="progress")  renderProgress();
+    if (tab==="templates") renderTemplates();
+  }, 10);
 }
 
 // ── Timer ──────────────────────────────────────────────────────────────────
