@@ -429,10 +429,12 @@ const SUPA_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
 const { createClient } = supabase;
 const sb = createClient(SUPA_URL, SUPA_KEY, {
   auth: {
-    flowType: "pkce",
+    flowType: "implicit",
     detectSessionInUrl: true,
     persistSession: true,
     autoRefreshToken: true,
+    storage: localStorage,
+    storageKey: "gt_session",
   }
 });
 
@@ -487,7 +489,6 @@ async function loginWithGoogle() {
     provider: "google",
     options: {
       redirectTo: "https://gabrielenichele29-cpu.github.io/GymTrack/",
-      skipBrowserRedirect: false,
     }
   });
 }
@@ -716,9 +717,28 @@ async function boot() {
   applyTheme();
   showLoading();
 
-  // Listen for future auth changes
+  // If URL has access_token in hash, Supabase will pick it up via detectSessionInUrl
+  // We just need to wait a moment for it to process
+  const hasToken = window.location.hash && window.location.hash.includes("access_token");
+
+  if (hasToken) {
+    // Give Supabase time to process the token from URL
+    await new Promise(r => setTimeout(r, 1500));
+    // Clean URL
+    history.replaceState(null, "", window.location.pathname);
+  }
+
+  const { data: { session }, error } = await sb.auth.getSession();
+
+  if (session?.user) {
+    await enterApp(session.user);
+  } else {
+    showLogin();
+  }
+
+  // Handle future sign in/out
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === "SIGNED_IN" && session?.user && !currentUser) {
+    if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session?.user && !currentUser) {
       await enterApp(session.user);
     } else if (event === "SIGNED_OUT") {
       currentUser = null;
@@ -726,14 +746,6 @@ async function boot() {
       showLogin();
     }
   });
-
-  // Check immediately for existing session
-  const { data: { session } } = await sb.auth.getSession();
-  if (session?.user) {
-    await enterApp(session.user);
-  } else {
-    showLogin();
-  }
 }
 
 boot();
