@@ -404,7 +404,27 @@ function renderTplPicker(){
   el.innerHTML=templates.map(t=>`<button class="tpl-card" onclick="selectTpl('${t.id}')"><div style="font-size:26px;margin-bottom:8px;">${t.emoji||"🏋️"}</div><div style="font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px;text-transform:uppercase;">${t.name}</div><div style="color:var(--muted);font-size:12px;margin-top:4px;">${t.exercises.length} esercizi</div></button>`).join("")+`<button class="tpl-card free" onclick="selectFree()"><div style="font-size:26px;margin-bottom:8px;">✏️</div><div style="font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px;text-transform:uppercase;">Libero</div></button>`;
 }
 
-function selectTpl(id){const t=templates.find(t=>t.id===id);logTpl=t;logExercises=t.exercises.map(e=>({name:e.name,sets:e.sets,reps:"",weight:"",restSecs:e.restSecs||0,fromTemplate:true,setData:Array.from({length:e.sets},()=>({reps:"",weight:""}))}));showLogEditor(t.name);}
+function getLastSession(exName) {
+  for (let i = workouts.length - 1; i >= 0; i--) {
+    const ex = workouts[i].exercises.find(e => e.name === exName);
+    if (ex) {
+      const sets = ex.sets || (ex.setData ? ex.setData.length : 0);
+      const weight = ex.setData ? (ex.setData.find(s => s.weight)?.weight || ex.weight || "") : (ex.weight || "");
+      return { sets, weight };
+    }
+  }
+  return null;
+}
+function selectTpl(id){
+  const t=templates.find(t=>t.id===id);
+  logTpl=t;
+  logExercises=t.exercises.map(e=>({
+    name:e.name,sets:e.sets,reps:"",weight:"",restSecs:e.restSecs||0,fromTemplate:true,
+    lastSession: getLastSession(e.name),
+    setData:Array.from({length:e.sets},()=>({reps:"",weight:""}))
+  }));
+  showLogEditor(t.name);
+}
 function selectFree(){logTpl={name:"LIBERO"};logExercises=[{name:"",sets:3,reps:"",weight:"",restSecs:0,fromTemplate:false,setData:Array.from({length:3},()=>({reps:"",weight:""}))}];showLogEditor("LIBERO");}
 function cancelLog(){document.getElementById("log-tpl-pick").style.display="";document.getElementById("log-editor").style.display="none";}
 function showLogEditor(name){document.getElementById("log-tpl-pick").style.display="none";document.getElementById("log-editor").style.display="";document.getElementById("log-editor-title").textContent=name;document.getElementById("log-note").value="";document.getElementById("log-actions").innerHTML=`<button class="btn-primary" onclick="saveSession()">💾 Salva sessione</button>`;renderLogExList();}
@@ -414,7 +434,10 @@ function renderLogExList(){
     const sets=ex.setData||Array.from({length:ex.sets||3},()=>({reps:"",weight:""}));
     const timerBtn=ex.restSecs>0?`<span class="timer-badge" onclick="openTimer(${ex.restSecs},'${(ex.name||"").replace(/'/g,"\\'")}')">⏱ ${Math.floor(ex.restSecs/60)}:${String(ex.restSecs%60).padStart(2,"0")}</span>`:"";
     const removeBtn=!ex.fromTemplate?`<button onclick="removeLogEx(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;">×</button>`:"";
-    return `<div class="log-ex-block slide-in"><div class="log-ex-name"><span>${ex.name||"Esercizio"}</span><div style="display:flex;gap:8px;align-items:center;">${timerBtn}${removeBtn}</div></div><div class="sets-grid">${sets.map((sd,si)=>`<div class="set-box"><div class="set-label">Serie ${si+1}</div><input class="set-input" type="text" inputmode="text" placeholder="rip" value="${sd.reps||""}" oninput="logExercises[${i}].setData[${si}].reps=this.value" /><input class="set-kg" type="number" min="0" step="0.5" placeholder="kg" value="${sd.weight||""}" oninput="logExercises[${i}].setData[${si}].weight=this.value?+this.value:''" /></div>`).join("")}</div></div>`;
+    const lastInfo = ex.lastSession
+      ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;color:var(--muted);font-weight:400;">ultima: ${ex.lastSession.sets} ser${ex.lastSession.weight ? " · " + ex.lastSession.weight + "kg" : ""}</span>`
+      : "";
+    return `<div class="log-ex-block slide-in"><div class="log-ex-name"><div style="display:flex;flex-direction:column;gap:2px;"><span>${ex.name||"Esercizio"}</span>${lastInfo}</div><div style="display:flex;gap:8px;align-items:center;">${timerBtn}${removeBtn}</div></div><div class="sets-grid">${sets.map((sd,si)=>`<div class="set-box"><div class="set-label">Serie ${si+1}</div><input class="set-input" type="text" inputmode="text" placeholder="rip" value="${sd.reps||""}" oninput="logExercises[${i}].setData[${si}].reps=this.value" /><input class="set-kg" type="number" min="0" step="0.5" placeholder="kg" value="${sd.weight||""}" oninput="logExercises[${i}].setData[${si}].weight=this.value?+this.value:''" /></div>`).join("")}</div></div>`;
   }).join("");
   document.querySelectorAll("[data-addbtn]").forEach(b=>b.remove());
   if(!logExercises[0]?.fromTemplate){const btn=document.createElement("button");btn.className="btn-ghost";btn.style.cssText="width:100%;margin-bottom:18px;";btn.textContent="+ Aggiungi esercizio";btn.setAttribute("data-addbtn","1");btn.onclick=addLogEx;document.getElementById("log-ex-list").after(btn);}
@@ -478,7 +501,7 @@ function renderTplExList(){document.getElementById("tpl-ex-list").innerHTML=tplE
 function addTplEx(){tplExercises.push({name:"",sets:3,reps:"",restSecs:0});renderTplExList();}
 function removeTplEx(i){tplExercises.splice(i,1);renderTplExList();}
 function saveTpl(){const name=document.getElementById("tpl-name-input").value.trim().toUpperCase();if(!name)return;editingTpl.name=name;editingTpl.exercises=tplExercises;const idx=templates.findIndex(t=>t.id===editingTpl.id);if(idx>=0)templates[idx]=editingTpl;else templates.push(editingTpl);save();renderTplPicker();renderTemplates();}
-function deleteTpl(id){templates=templates.filter(t=>t.id!==id);save();renderTemplates();renderTplPicker();}
+function deleteTpl(id){if(!confirm("Eliminare questa scheda?"))return;templates=templates.filter(t=>t.id!==id);save();renderTemplates();renderTplPicker();}
 
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;if(!localStorage.getItem("gt_install_dismissed"))document.getElementById("install-banner").classList.add("show");});
 function installApp(){if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;dismissInstall()});}
